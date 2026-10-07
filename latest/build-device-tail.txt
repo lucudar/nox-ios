@@ -2,6 +2,10 @@ SwiftMergeGeneratedHeaders build/device/Build/Intermediates.noindex/Nox.build/Re
     cd /Users/runner/work/nox-ios/nox-ios
     builtin-swiftHeaderTool -arch arm64 build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox-Swift.h -o build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/DerivedSources/Nox-Swift.h
 
+Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.abi.json build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.abi.json (in target 'Nox' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.abi.json build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.abi.json
+
 Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule
@@ -9,10 +13,6 @@ Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-io
 Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftdoc build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftdoc (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftdoc build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftdoc
-
-Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.abi.json build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.abi.json (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.abi.json build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.abi.json
 
 Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftsourceinfo (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
@@ -30,8 +30,8 @@ Ignoring --strip-bitcode because --sign was not passed
 ExtractAppIntentsMetadata (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name Nox --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 17.0 --bundle-identifier com.example.nox --output build/device/Build/Products/Release-iphoneos/Nox.app --target-triple arm64-apple-ios17.0 --binary-file build/device/Build/Products/Release-iphoneos/Nox.app/Nox --dependency-file build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox_dependency_info.dat --stringsdata-file build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.SwiftFileList --metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyMetadataFileList --static-metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyStaticMetadataFileList --swift-const-vals-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-10-07 15:30:10.519 appintentsmetadataprocessor[3314:15217] Starting appintentsmetadataprocessor export
-2026-10-07 15:30:10.520 appintentsmetadataprocessor[3314:15217] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-07 15:36:44.342 appintentsmetadataprocessor[2143:10234] Starting appintentsmetadataprocessor export
+2026-10-07 15:36:44.343 appintentsmetadataprocessor[2143:10234] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 GenerateDSYMFile build/device/Build/Products/Release-iphoneos/Nox.app.dSYM build/device/Build/Products/Release-iphoneos/Nox.app/Nox (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
@@ -40,8 +40,8 @@ GenerateDSYMFile build/device/Build/Products/Release-iphoneos/Nox.app.dSYM build
 AppIntentsSSUTraining (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path build/device/Build/Products/Release-iphoneos/Nox.app/Info.plist --temp-dir-path build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/ssu --bundle-id com.example.nox --product-path build/device/Build/Products/Release-iphoneos/Nox.app --extracted-metadata-path build/device/Build/Products/Release-iphoneos/Nox.app/Metadata.appintents --metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyMetadataFileList --archive-ssu-assets
-2026-10-07 15:30:10.535 appintentsnltrainingprocessor[3316:15219] Parsing options for appintentsnltrainingprocessor
-2026-10-07 15:30:10.535 appintentsnltrainingprocessor[3316:15219] No AppShortcuts found - Skipping.
+2026-10-07 15:36:44.358 appintentsnltrainingprocessor[2160:10272] Parsing options for appintentsnltrainingprocessor
+2026-10-07 15:36:44.359 appintentsnltrainingprocessor[2160:10272] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException build/device/Build/Products/Release-iphoneos/Nox.app (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios

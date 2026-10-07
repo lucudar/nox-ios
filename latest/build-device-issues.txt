@@ -1,7 +1,2 @@
 ** BUILD SUCCEEDED **
-2026-10-07 15:30:10.520 appintentsmetadataprocessor[3314:15217] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
-Nox/Features/Appearance/AppearanceView.swift:195:44: warning: call to main actor-isolated instance method 't' in a synchronous nonisolated context; this is an error in the Swift 6 language mode
-Nox/Features/Appearance/AppearanceView.swift:200:69: warning: main actor-isolated property 'elevatedColor' can not be referenced from a Sendable closure; this is an error in the Swift 6 language mode
-Nox/Features/Appearance/AppearanceView.swift:351:9: warning: result of call to 'withAnimation' is unused
-Nox/Features/Servers/QRScannerView.swift:58:36: warning: call to main actor-isolated instance method 't' in a synchronous nonisolated context; this is an error in the Swift 6 language mode
-Nox/Features/Servers/QRScannerView.swift:63:61: warning: main actor-isolated property 'elevatedColor' can not be referenced from a Sendable closure; this is an error in the Swift 6 language mode
+2026-10-07 15:36:44.343 appintentsmetadataprocessor[2143:10234] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
