@@ -49,9 +49,13 @@ Nox/
 
 ## Сборка в GitHub Actions
 
-Каждый пуш в `main` собирается на macOS в Xcode 16 (`.github/workflows/build.yml`): одна сборка для симулятора, другая — неподписанная для iPhone. Готовые файлы публикуются в релизе **latest-build**:
+Каждый пуш в `main` собирается на macOS в Xcode 16 (`.github/workflows/build.yml`): одна сборка для симулятора, другая — неподписанная для iPhone. После успешной сборки в **Releases** появляется новый релиз `v<версия>-<номер сборки>` (например, `v0.5-3`), и он помечается как Latest. Хранятся 10 последних сборок.
 
 - `Nox-unsigned.ipa` — для iPhone. Установить можно через Sideloadly, AltStore или SideStore: они подпишут сборку вашим Apple ID.
 - `Nox-simulator.zip` — для симулятора на Mac: распакуйте архив и перетащите `Nox.app` в окно симулятора.
+
+Постоянная ссылка на свежую сборку: `https://github.com/lucudar/nox-ios/releases/latest/download/Nox-unsigned.ipa`.
+
+Номер сборки записывается в приложение (`CFBundleVersion`). Версию меняйте в `MARKETING_VERSION` в настройках таргета.
 
 Иконки приложения рисует скрипт `tools/make_icons.py` (без зависимостей). Если PNG в репозитории нет, workflow сгенерирует их сам и закоммитит.

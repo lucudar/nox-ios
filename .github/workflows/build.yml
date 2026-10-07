@@ -49,7 +49,7 @@ jobs:
           run() {
             xcodebuild -project Nox.xcodeproj -scheme Nox -configuration Debug \
               -destination 'generic/platform=iOS Simulator' -derivedDataPath build/sim \
-              CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-sim.log
+              CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-sim.log
           }
           if ! run; then
             if grep -q "is not installed" build-sim.log; then
@@ -66,7 +66,7 @@ jobs:
           set -o pipefail
           xcodebuild -project Nox.xcodeproj -scheme Nox -configuration Release \
             -destination 'generic/platform=iOS' -derivedDataPath build/device \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee build-device.log
 
       - name: Package
@@ -84,14 +84,29 @@ jobs:
           path: dist/*
 
       - name: Publish release
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest-build --yes --cleanup-tag || true
-          gh release create latest-build dist/Nox-unsigned.ipa dist/Nox-simulator.zip \
-            --target "$GITHUB_SHA" --prerelease \
-            --title "Nox · сборка #${GITHUB_RUN_NUMBER}" \
-            --notes-file .github/release-notes.md
+          VERSION=$(grep -m1 -o 'MARKETING_VERSION = [^;]*' Nox.xcodeproj/project.pbxproj | awk '{print $3}')
+          SHORT=$(echo "$GITHUB_SHA" | cut -c1-7)
+          TAG="v${VERSION}-${GITHUB_RUN_NUMBER}"
+          echo "$TAG" > "$RUNNER_TEMP/tag.txt"
+          {
+            echo "**Nox ${VERSION}**, сборка ${GITHUB_RUN_NUMBER} · $(xcodebuild -version | head -1) · коммит ${SHORT}"
+            echo
+            cat .github/release-notes.md
+          } > "$RUNNER_TEMP/notes.md"
+          # old rolling pre-release from the first setup
+          gh release delete latest-build --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" dist/Nox-unsigned.ipa dist/Nox-simulator.zip \
+            --target "$GITHUB_SHA" --latest \
+            --title "Nox ${VERSION} (${GITHUB_RUN_NUMBER})" \
+            --notes-file "$RUNNER_TEMP/notes.md"
+          # keep the 10 newest build releases (tags like v0.5-12); other releases are left alone
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | test("^v[0-9.]+-[0-9]+$"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+            while read -r old; do gh release delete "$old" --yes --cleanup-tag || true; done
 
       - name: Report
         if: always()
@@ -107,6 +122,7 @@ jobs:
             echo "simulator: ${{ steps.sim.outcome }}"
             echo "device: ${{ steps.device.outcome }}"
             echo "package: ${{ steps.package.outcome }}"
+            echo "release: ${{ steps.release.outcome }} $(cat "$RUNNER_TEMP/tag.txt" 2>/dev/null)"
           } > "$R/summary.txt"
           for f in build-sim build-device; do
             [ -f "$f.log" ] || continue
