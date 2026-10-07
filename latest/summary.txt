@@ -1,7 +1,8 @@
-run: https://github.com/lucudar/nox-ios/actions/runs/37645195547
-run_number: 2
-sha: d8dfda093bc8556cb956b08b434b1dfa67843535
+run: https://github.com/lucudar/nox-ios/actions/runs/37674729276
+run_number: 3
+sha: 848b5c3386a53098f7ad7ca1002e0e259a7dbcd7
 xcode: Xcode 16.4 Build version 16F6 
 simulator: success
 device: success
 package: success
+release: success v0.5-3
