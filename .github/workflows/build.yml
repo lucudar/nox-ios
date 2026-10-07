@@ -1,0 +1,128 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Xcode 16 build
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: |
+          ls -d /Applications/Xcode*.app || true
+          XCODE=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$XCODE" ]; then sudo xcode-select -s "$XCODE/Contents/Developer"; fi
+          xcodebuild -version
+
+      - name: Generate app icons
+        run: python3 tools/make_icons.py
+
+      - name: Commit generated icons
+        continue-on-error: true
+        run: |
+          if [ -n "$(git status --porcelain -- Nox/Assets.xcassets)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add Nox/Assets.xcassets
+            git commit -m "Add generated app icons [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Build for Simulator
+        id: sim
+        run: |
+          set -o pipefail
+          run() {
+            xcodebuild -project Nox.xcodeproj -scheme Nox -configuration Debug \
+              -destination 'generic/platform=iOS Simulator' -derivedDataPath build/sim \
+              CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-sim.log
+          }
+          if ! run; then
+            if grep -q "is not installed" build-sim.log; then
+              xcodebuild -downloadPlatform iOS
+              run
+            else
+              exit 1
+            fi
+          fi
+
+      - name: Build for iPhone (unsigned)
+        id: device
+        run: |
+          set -o pipefail
+          xcodebuild -project Nox.xcodeproj -scheme Nox -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build-device.log
+
+      - name: Package
+        id: package
+        run: |
+          mkdir -p dist/Payload
+          cp -R build/device/Build/Products/Release-iphoneos/Nox.app dist/Payload/
+          (cd dist && zip -qry Nox-unsigned.ipa Payload && rm -rf Payload)
+          (cd build/sim/Build/Products/Debug-iphonesimulator && zip -qry "$GITHUB_WORKSPACE/dist/Nox-simulator.zip" Nox.app)
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nox-${{ github.run_number }}
+          path: dist/*
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-build --yes --cleanup-tag || true
+          gh release create latest-build dist/Nox-unsigned.ipa dist/Nox-simulator.zip \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Nox · сборка #${GITHUB_RUN_NUMBER}" \
+            --notes-file .github/release-notes.md
+
+      - name: Report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          R="$RUNNER_TEMP/report"; mkdir -p "$R"
+          {
+            echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "run_number: $GITHUB_RUN_NUMBER"
+            echo "sha: $GITHUB_SHA"
+            echo "xcode: $(xcodebuild -version | tr '\n' ' ')"
+            echo "simulator: ${{ steps.sim.outcome }}"
+            echo "device: ${{ steps.device.outcome }}"
+            echo "package: ${{ steps.package.outcome }}"
+          } > "$R/summary.txt"
+          for f in build-sim build-device; do
+            [ -f "$f.log" ] || continue
+            sed "s#$GITHUB_WORKSPACE/##g" "$f.log" > "$R/$f.full"
+            grep -E "error:|warning:|BUILD SUCCEEDED|BUILD FAILED" "$R/$f.full" | sort | uniq | head -n 300 > "$R/$f-issues.txt" || true
+            grep -A 30 "The following build commands failed" "$R/$f.full" > "$R/$f-failed.txt" || true
+            tail -n 60 "$R/$f.full" > "$R/$f-tail.txt"
+            rm "$R/$f.full"
+          done
+          cd "$RUNNER_TEMP"
+          URL="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if ! git clone -q --depth 1 --branch ci-logs "$URL" logs 2>/dev/null; then
+            mkdir logs && cd logs && git init -q -b ci-logs && git remote add origin "$URL" && cd ..
+          fi
+          cd logs
+          rm -rf latest && mkdir latest && cp "$R"/* latest/
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "CI report #$GITHUB_RUN_NUMBER ($GITHUB_SHA)"
+          git push -q origin ci-logs
