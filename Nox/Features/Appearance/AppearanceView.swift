@@ -191,13 +191,15 @@ struct AppearanceView: View {
                     LabeledSlider(title: settings.t("Затемнение", "Dim"), value: "\(Int((settings.look.photoDim * 100).rounded()))%",
                                   binding: Bindable(settings).look.photoDim, range: 0...0.85, step: nil)
                     HStack(spacing: 12) {
+                        let changeTitle = settings.t("Другое фото", "Change photo")
+                        let chipFill = settings.elevatedColor
                         PhotosPicker(selection: $photoItem, matching: .images) {
-                            Label(settings.t("Другое фото", "Change photo"), systemImage: "photo")
+                            Label(changeTitle, systemImage: "photo")
                                 .font(.system(size: 15, weight: .medium))
                                 .foregroundStyle(Ink.primary)
                                 .padding(.horizontal, 14)
                                 .frame(height: 36)
-                                .background(Capsule().fill(settings.elevatedColor))
+                                .background(Capsule().fill(chipFill))
                                 .overlay(Capsule().strokeBorder(Ink.stroke, lineWidth: 1))
                         }
                         .buttonStyle(PressStyle())
@@ -348,7 +350,7 @@ struct AppearanceView: View {
             return
         }
         Haptics.success()
-        withAnimation(Motion.spring) { settings.saveCurrentAsPreset() }
+        withAnimation(Motion.spring) { _ = settings.saveCurrentAsPreset() }
         toast = Toast(text: settings.t("Пресет сохранён", "Preset saved"))
     }
 

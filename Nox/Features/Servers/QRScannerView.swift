@@ -54,13 +54,15 @@ struct QRScannerView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(PingColor.bad.color)
                 }
+                let pickTitle = settings.t("Выбрать из фото", "Choose from photos")
+                let chipFill = settings.elevatedColor
                 PhotosPicker(selection: $photoItem, matching: .images) {
-                    Label(settings.t("Выбрать из фото", "Choose from photos"), systemImage: "photo.on.rectangle")
+                    Label(pickTitle, systemImage: "photo.on.rectangle")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Ink.primary)
                         .padding(.horizontal, 20)
                         .frame(height: 48)
-                        .background(Capsule().fill(settings.elevatedColor))
+                        .background(Capsule().fill(chipFill))
                         .overlay(Capsule().strokeBorder(Ink.stroke, lineWidth: 1))
                 }
             }
