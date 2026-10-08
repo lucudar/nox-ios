@@ -1,34 +1,20 @@
-SwiftCompile normal x86_64 Nox/Core/Look.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Nox/Core/Models.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal x86_64 build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Nox/Features/Servers/ServersSheet.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Compiling\ TunnelEngine.swift,\ NoxBackground.swift,\ ConnectionManager.swift,\ DNSView.swift,\ ShareLinkParser.swift,\ FlagView.swift,\ QRScannerView.swift,\ PingService.swift,\ StatsView.swift Nox/Core/TunnelEngine.swift Nox/Design/NoxBackground.swift Nox/Core/ConnectionManager.swift Nox/Features/Settings/DNSView.swift Nox/Core/ShareLinkParser.swift Nox/Design/FlagView.swift Nox/Features/Servers/QRScannerView.swift Nox/Core/PingService.swift Nox/Features/Stats/StatsView.swift (in target 'Nox' from project 'Nox')
+SwiftDriverJobDiscovery normal arm64 Emitting module for Nox (in target 'Nox' from project 'Nox')
 
-SwiftCompile normal arm64 Nox/Core/TunnelEngine.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Compiling\ Components.swift,\ ManualDraft.swift,\ QRScannerView.swift,\ ColorBridge.swift,\ Look.swift,\ ManualServerView.swift,\ BackgroundPhoto.swift,\ GeneratedAssetSymbols.swift Nox/Design/Components.swift Nox/Core/ManualDraft.swift Nox/Features/Servers/QRScannerView.swift Nox/Design/ColorBridge.swift Nox/Core/Look.swift Nox/Features/Servers/ManualServerView.swift Nox/Design/BackgroundPhoto.swift build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
+
+SwiftCompile normal arm64 Nox/Design/Components.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Nox/Design/NoxBackground.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/ConnectionManager.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Features/Settings/DNSView.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/ShareLinkParser.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Design/FlagView.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Nox/Core/ManualDraft.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
@@ -36,11 +22,23 @@ SwiftCompile normal arm64 Nox/Features/Servers/QRScannerView.swift (in target 'N
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Nox/Core/PingService.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Nox/Design/ColorBridge.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Nox/Features/Stats/StatsView.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Nox/Core/Look.swift (in target 'Nox' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    
+
+SwiftCompile normal arm64 Nox/Features/Servers/ManualServerView.swift (in target 'Nox' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    
+
+SwiftCompile normal arm64 Nox/Design/BackgroundPhoto.swift (in target 'Nox' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    
+
+SwiftCompile normal arm64 build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
@@ -54,7 +52,9 @@ SwiftDriver\ Compilation\ Requirements Nox normal x86_64 com.apple.xcode.tools.s
 
 
 The following build commands failed:
-	SwiftCompile normal x86_64 Compiling\ ServerStore.swift,\ DialRenderer.swift,\ ManualServerView.swift,\ Persist.swift,\ BackgroundPhoto.swift,\ NoxApp.swift,\ HomeView.swift,\ Look.swift,\ GeneratedAssetSymbols.swift Nox/Core/ServerStore.swift Nox/Design/DialRenderer.swift Nox/Features/Servers/ManualServerView.swift Nox/Core/Persist.swift Nox/Design/BackgroundPhoto.swift Nox/App/NoxApp.swift Nox/Features/Home/HomeView.swift Nox/Core/Look.swift build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal x86_64 Nox/Core/ServerStore.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal arm64 Nox/Features/Home/HomeView.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal arm64 Compiling\ L10n.swift,\ AddSubscriptionView.swift,\ AppIconArt.swift,\ Format.swift,\ StatsView.swift,\ Countries.swift,\ HomeView.swift,\ ConnectionManager.swift,\ SettingsView.swift Nox/Core/L10n.swift Nox/Features/Servers/AddSubscriptionView.swift Nox/Design/AppIconArt.swift Nox/Core/Format.swift Nox/Features/Stats/StatsView.swift Nox/Core/Countries.swift Nox/Features/Home/HomeView.swift Nox/Core/ConnectionManager.swift Nox/Features/Settings/SettingsView.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal x86_64 Compiling\ L10n.swift,\ AddSubscriptionView.swift,\ AppIconArt.swift,\ Format.swift,\ StatsView.swift,\ Countries.swift,\ HomeView.swift,\ ConnectionManager.swift,\ SettingsView.swift Nox/Core/L10n.swift Nox/Features/Servers/AddSubscriptionView.swift Nox/Design/AppIconArt.swift Nox/Core/Format.swift Nox/Features/Stats/StatsView.swift Nox/Core/Countries.swift Nox/Features/Home/HomeView.swift Nox/Core/ConnectionManager.swift Nox/Features/Settings/SettingsView.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal x86_64 Nox/Features/Home/HomeView.swift (in target 'Nox' from project 'Nox')
 	Building project Nox with scheme Nox and configuration Debug
-(3 failures)
+(5 failures)
