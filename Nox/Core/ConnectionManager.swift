@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-/// Connection state machine on top of a `TunnelEngine`, plus live speed / IP / logs.
+/// Connection state on top of a `TunnelEngine` (the system VPN status is the source of truth),
+/// plus live speed, exit IP, latency and traffic accounting read from the core.
 @MainActor
 @Observable
 final class ConnectionManager {
@@ -23,22 +24,44 @@ final class ConnectionManager {
 
     private(set) var status: Status = .disconnected
     private(set) var server: Server?
+    /// Live speed through the core, Mbit/s.
     private(set) var down: Double = 0
     private(set) var up: Double = 0
+    /// Exit address and its country code ("" until known).
     private(set) var ip = ""
+    private(set) var exitCountry = ""
+    /// HTTPS round trip through the proxy, ms.
+    private(set) var latency: Int?
     private(set) var logs: [LogLine] = []
     private(set) var lastError: String?
 
-    /// Traffic hook (MB down, MB up, seconds, server) → statistics.
+    /// Traffic (MB down, MB up, seconds online, server) → statistics.
     @ObservationIgnored var onTraffic: ((Double, Double, Double, Server) -> Void)?
+    /// Latency samples (ms) → statistics.
+    @ObservationIgnored var onLatency: ((Int) -> Void)?
 
     @ObservationIgnored private let engine: TunnelEngine
     @ObservationIgnored private var job: Task<Void, Never>?
-    @ObservationIgnored private var meter: Task<Void, Never>?
+    @ObservationIgnored private var monitors: [Task<Void, Never>] = []
+    @ObservationIgnored private var options: TunnelOptions?
+    /// start() is in flight: its result decides, early "disconnected" events are ignored.
+    @ObservationIgnored private var starting = false
+    /// The user pressed disconnect: not an error.
+    @ObservationIgnored private var stopping = false
+    @ObservationIgnored private var sessionSince: Date?
+
+    private enum Key {
+        static let server = "nox.active.server"
+    }
 
     init(engine: TunnelEngine? = nil) {
+        #if targetEnvironment(simulator)
         self.engine = engine ?? DemoTunnelEngine()
-        log(.info, "Nox · engine: \(self.engine.name)")
+        #else
+        self.engine = engine ?? SingBoxEngine()
+        #endif
+        self.engine.onState = { [weak self] state in self?.apply(state) }
+        log(.info, "Nox \(AppInfo.version) · \(self.engine.name)")
     }
 
     var isActive: Bool { status != .disconnected }
@@ -46,6 +69,21 @@ final class ConnectionManager {
     var isConnected: Bool {
         if case .connected = status { return true }
         return false
+    }
+
+    // MARK: Launch
+
+    /// Picks up a tunnel that kept running while the app was closed (or was started by iOS).
+    func restore(servers: ServerStore, options: TunnelOptions) async {
+        self.options = options
+        if let id = UserDefaults.standard.string(forKey: Key.server).flatMap(UUID.init(uuidString:)) {
+            server = servers.server(id)
+        }
+        if server == nil { server = servers.current }
+        let state = await engine.restore()
+        guard state != .disconnected else { return }
+        log(.info, L10n.t("Туннель уже запущен", "The tunnel is already running"))
+        apply(state)
     }
 
     // MARK: Actions
@@ -62,36 +100,59 @@ final class ConnectionManager {
     }
 
     func connect(_ server: Server, options: TunnelOptions) {
-        run(server, options: options, stopFirst: false)
+        start(server, options: options, restart: false)
     }
 
-    /// Switching servers while connected / connecting.
-    func reconnect(_ server: Server, options: TunnelOptions) {
-        guard isActive, server.id != self.server?.id || status == .connecting else { return }
-        log(.info, L10n.t("Смена сервера → \(server.displayName(L10n.lang))", "Switching to \(server.displayName(L10n.lang))"))
-        run(server, options: options, stopFirst: true)
+    /// The selected server changed while the tunnel is up.
+    func switchServer(_ server: Server, options: TunnelOptions) {
+        guard isActive, status != .disconnecting, server.id != self.server?.id else { return }
+        log(.info, L10n.t("Смена сервера → ", "Switching to ") + server.displayName(L10n.lang))
+        if isConnected {
+            reload(server, options: options)
+        } else {
+            start(server, options: options, restart: true)
+        }
     }
 
-    /// Mode / DNS / rules / kill switch changed while active → restart the tunnel on the same server.
-    func applyOptions(_ options: TunnelOptions) {
-        guard isActive, status != .disconnecting, let server else { return }
-        log(.info, L10n.t("Настройки изменены — перезапуск туннеля", "Settings changed — restarting the tunnel"))
-        run(server, options: options, stopFirst: true)
+    /// Routing / DNS / rules / kill switch / auto-connect changed.
+    func applyOptions(_ new: TunnelOptions) {
+        let old = options
+        options = new
+        guard let old, old != new else { return }
+        guard isActive, status != .disconnecting, let server else {
+            // Not running: only switching auto-connect off has to reach the VPN profile now.
+            if old.autoConnect, !new.autoConnect { Task { await engine.updateProfile(new) } }
+            return
+        }
+        if new.onlyProfileChanged(comparedTo: old) {
+            Task { await engine.updateProfile(new) }
+        } else if new.needsRestart(comparedTo: old) {
+            log(.info, L10n.t("Kill Switch изменён — переподключение", "Kill switch changed — reconnecting"))
+            start(server, options: new, restart: true)
+        } else {
+            if new.autoConnect != old.autoConnect { Task { await engine.updateProfile(new) } }
+            if isConnected {
+                log(.info, L10n.t("Настройки применяются без разрыва", "Applying settings without reconnecting"))
+                reload(server, options: new)
+            } else {
+                start(server, options: new, restart: true)
+            }
+        }
     }
 
     func disconnect() {
         job?.cancel()
-        meter?.cancel()
+        starting = false
+        stopping = true
         status = .disconnecting
         log(.info, L10n.t("Отключение…", "Disconnecting…"))
+        stopMonitors()
         job = Task { [weak self] in
             guard let self else { return }
+            await self.account()   // the core's counters go away with it
             await self.engine.stop()
-            guard !Task.isCancelled else { return }
-            self.status = .disconnected
-            self.down = 0
-            self.up = 0
-            self.log(.info, L10n.t("Отключено", "Disconnected"))
+            self.stopping = false
+            if self.status != .disconnected { self.finish() }
         }
     }
 
@@ -103,77 +164,229 @@ final class ConnectionManager {
         return logs.map { "\(f.string(from: $0.date)) \($0.level.rawValue.uppercased()) \($0.text)" }.joined(separator: "\n")
     }
 
-    // MARK: Internals
-
-    private func run(_ server: Server, options: TunnelOptions, stopFirst: Bool) {
-        job?.cancel()
-        meter?.cancel()
-        self.server = server
-        lastError = nil
-        status = .connecting
-        down = 0
-        up = 0
-        log(.info, L10n.t("Подключение: ", "Connecting: ") + "\(server.displayName(L10n.lang)) · \(server.protoTitle)")
-        job = Task { [weak self] in
-            guard let self else { return }
-            if stopFirst { await self.engine.stop() }
-            do {
-                try await self.engine.start(server, options: options) { [weak self] level, text in
-                    self?.log(level, text)
-                }
-                guard !Task.isCancelled else { return }
-                self.status = .connected(since: Date())
-                self.ip = Self.publicIP(for: server)
-                self.log(.info, L10n.t("Защищено · IP ", "Protected · IP ") + Self.masked(self.ip))
-                self.startMeter(server)
-            } catch is CancellationError {
-                // superseded by another action
-            } catch {
-                guard !Task.isCancelled else { return }
-                self.lastError = error.localizedDescription
-                self.log(.error, error.localizedDescription)
-                self.status = .disconnected
-            }
-        }
-    }
-
-    private func startMeter(_ server: Server) {
-        meter?.cancel()
-        let ping = Double(server.lastPing ?? server.demoPing).clamped(8, 400)
-        let baseDown = (950 / (ping + 1)).clamped(6, 46)
-        meter = Task { [weak self] in
-            var d = baseDown * 0.6
-            var u = baseDown * 0.08
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                guard let self, !Task.isCancelled else { return }
-                d = (d + (baseDown - d) * 0.35 + Double.random(in: -2.2...2.2)).clamped(0.3, 95)
-                u = (u + (baseDown * 0.13 - u) * 0.35 + Double.random(in: -0.5...0.5)).clamped(0.1, 30)
-                self.down = d
-                self.up = u
-                self.onTraffic?(d / 8, u / 8, 1, server)
-            }
-        }
-    }
-
     func log(_ level: LogLine.Level, _ text: String) {
         logs.append(LogLine(date: Date(), level: level, text: text))
         if logs.count > 500 { logs.removeFirst(logs.count - 500) }
     }
 
-    /// Exit IP. With a real engine it comes from the tunnel; the demo derives a stable one.
-    static func publicIP(for server: Server) -> String {
-        let parts = server.host.split(separator: ".").compactMap { Int($0) }
-        if parts.count == 4, !Countries.isPrivateHost(server.host) { return server.host }
-        var h: UInt32 = 2166136261
-        for b in server.id.uuidString.utf8 { h = (h ^ UInt32(b)) &* 16777619 }
-        return "185.107.\(h % 250 + 2).\((h >> 8) % 250 + 2)"
+    // MARK: Internals
+
+    private func start(_ server: Server, options: TunnelOptions, restart: Bool) {
+        job?.cancel()
+        stopMonitors()
+        select(server)
+        self.options = options
+        lastError = nil
+        starting = true
+        status = .connecting
+        log(.info, L10n.t("Подключение: ", "Connecting: ") + "\(server.displayName(L10n.lang)) · \(server.protoTitle)")
+        job = Task { [weak self] in
+            guard let self else { return }
+            if restart {
+                await self.account()
+                await self.engine.stop()
+            }
+            do {
+                try Task.checkCancellation()
+                try await self.engine.start(server, options: options)
+                guard !Task.isCancelled else { return }
+                self.starting = false
+                if !self.isConnected { self.apply(.connected(since: Date())) }
+            } catch {
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                self.starting = false
+                self.fail(error.localizedDescription)
+            }
+        }
     }
 
-    /// 185.107.•••.••
+    /// New config inside the running tunnel.
+    private func reload(_ server: Server, options: TunnelOptions) {
+        job?.cancel()
+        self.options = options
+        job = Task { [weak self] in
+            guard let self else { return }
+            await self.account()   // traffic so far belongs to the previous server
+            self.select(server)
+            do {
+                try await self.engine.update(server, options: options)
+                guard !Task.isCancelled else { return }
+                if let since = self.sessionSince { TrafficMark(since: since, up: 0, down: 0, at: Date()).save() }
+                self.log(.info, L10n.t("Конфигурация обновлена", "Configuration updated"))
+                self.startMonitors()
+            } catch {
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                self.fail(error.localizedDescription)
+            }
+        }
+    }
+
+    private func select(_ server: Server) {
+        self.server = server
+        UserDefaults.standard.set(server.id.uuidString, forKey: Key.server)
+    }
+
+    /// System VPN status → app status.
+    private func apply(_ state: TunnelState) {
+        switch state {
+        case .connected(let since):
+            let fresh = !isConnected || sessionSince != since
+            status = .connected(since: since)
+            sessionSince = since
+            if fresh {
+                log(.info, L10n.t("Подключено", "Connected"))
+                startMonitors()
+            }
+        case .connecting:
+            if status != .disconnecting { status = .connecting }
+        case .reasserting:
+            // A reload inside a live tunnel: keep showing it as connected.
+            if !isConnected, status != .disconnecting { status = .connecting }
+        case .disconnecting:
+            if !starting { status = .disconnecting }
+        case .disconnected:
+            guard !starting, status != .disconnected else { return }
+            let unexpected = !stopping
+            finish()
+            if unexpected {
+                // Stopped from outside: iOS Settings, the system, or a core error.
+                Task { [weak self] in
+                    guard let self, let error = await self.engine.lastError() else { return }
+                    self.lastError = error
+                    self.log(.error, error)
+                }
+            }
+        }
+    }
+
+    private func finish() {
+        stopMonitors()
+        resetLive()
+        status = .disconnected
+        log(.info, L10n.t("Отключено", "Disconnected"))
+    }
+
+    private func fail(_ message: String) {
+        lastError = message
+        log(.error, message)
+        stopMonitors()
+        resetLive()
+        status = .disconnected
+    }
+
+    private func resetLive() {
+        down = 0
+        up = 0
+        ip = ""
+        exitCountry = ""
+        latency = nil
+    }
+
+    // MARK: Live data
+
+    private func startMonitors() {
+        stopMonitors()
+        ip = ""
+        exitCountry = ""
+        latency = nil
+        guard let api = engine.api else { return }
+        monitors = [
+            Task { [weak self] in await self?.watchSpeed(api) },
+            Task { [weak self] in await self?.watchTraffic(api) },
+            Task { [weak self] in await self?.watchExit(api) },
+        ]
+    }
+
+    private func stopMonitors() {
+        monitors.forEach { $0.cancel() }
+        monitors = []
+    }
+
+    private func watchSpeed(_ api: CoreAPI) async {
+        while !Task.isCancelled {
+            do {
+                for try await sample in api.traffic() {
+                    down = Double(sample.down) * 8 / 1_000_000
+                    up = Double(sample.up) * 8 / 1_000_000
+                }
+            } catch {}
+            guard !Task.isCancelled else { return }
+            down = 0
+            up = 0
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+    }
+
+    private func watchTraffic(_ api: CoreAPI) async {
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 15_000_000_000)
+            guard !Task.isCancelled else { return }
+            await account(api)
+        }
+    }
+
+    private func watchExit(_ api: CoreAPI) async {
+        // The first requests can race the core's start: a few tries.
+        for attempt in 0..<5 {
+            guard !Task.isCancelled else { return }
+            if let info = await ExitInfo.fetch() {
+                ip = info.ip
+                exitCountry = info.country
+                break
+            }
+            try? await Task.sleep(nanoseconds: UInt64(1 << attempt) * 1_500_000_000)
+        }
+        while !Task.isCancelled {
+            if let ms = await api.delay(), !Task.isCancelled {
+                latency = ms
+                onLatency?(ms)
+            }
+            try? await Task.sleep(nanoseconds: 60_000_000_000)
+        }
+    }
+
+    /// Adds what the core moved since the last look to the statistics. The marker survives app
+    /// restarts, so traffic while the app was closed is counted once.
+    private func account(_ api: CoreAPI? = nil) async {
+        guard let api = api ?? engine.api, let since = sessionSince, let server,
+              let totals = try? await api.totals() else { return }
+        let now = Date()
+        var up = totals.up, down = totals.down
+        var seconds = now.timeIntervalSince(since)
+        if let mark = TrafficMark.load(), abs(mark.since.timeIntervalSince(since)) < 1 {
+            seconds = now.timeIntervalSince(mark.at)
+            // Smaller totals → the core restarted (reload): its counters began from zero.
+            if totals.up >= mark.up, totals.down >= mark.down {
+                up -= mark.up
+                down -= mark.down
+            }
+        }
+        TrafficMark(since: since, up: totals.up, down: totals.down, at: now).save()
+        guard up > 0 || down > 0 || seconds > 0 else { return }
+        onTraffic?(Double(down) / 1_048_576, Double(up) / 1_048_576, max(0, seconds), server)
+    }
+
+    /// 185.107.•••.•• / 2a01:4f8:•••
     static func masked(_ ip: String) -> String {
+        if ip.contains(":") {
+            let groups = ip.split(separator: ":", omittingEmptySubsequences: false)
+            return groups.prefix(2).joined(separator: ":") + ":•••"
+        }
         let p = ip.split(separator: ".")
         guard p.count == 4 else { return ip }
         return "\(p[0]).\(p[1]).•••.••"
     }
+}
+
+/// Core counters at the last look, per tunnel session.
+private struct TrafficMark: Codable {
+    var since: Date
+    var up: Int64
+    var down: Int64
+    var at: Date
+
+    private static let key = "nox.traffic.mark"
+
+    static func load() -> TrafficMark? { Persist.load(key, default: TrafficMark?.none) }
+    func save() { Persist.save(self, Self.key) }
 }

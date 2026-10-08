@@ -172,6 +172,9 @@ enum ConfigFiles {
         var out: [Server] = []
         var inProxies = false
         var current: [String: String] = [:]
+        /// Indent of the "- name: …" items; deeper "- x" lines are nested lists ("alpn:\n  - h2").
+        var itemIndent: Int?
+        var lastKey: String?
 
         func flush() {
             defer { current = [:] }
@@ -188,20 +191,39 @@ enum ConfigFiles {
                 // Top-level key: "proxies:" opens the list, anything else closes it.
                 flush()
                 inProxies = trimmed.hasPrefix("proxies:")
+                itemIndent = nil
+                lastKey = nil
                 continue
             }
             guard inProxies else { continue }
             if trimmed == "-" || trimmed.hasPrefix("- ") {
-                flush()
                 let item = trimmed.dropFirst().trimmingCharacters(in: .whitespaces)
+                if let base = itemIndent, indent > base {
+                    // Nested block list → comma-joined value of the key above it.
+                    if let key = lastKey {
+                        let value = unquote(item)
+                        let old = current[key] ?? ""
+                        current[key] = old.isEmpty ? value : old + "," + value
+                    }
+                    continue
+                }
+                itemIndent = indent
+                flush()
+                lastKey = nil
                 if item.hasPrefix("{") {
                     current = flowMap(item)
                     flush()
                 } else if let kv = keyValue(item) {
                     current[kv.0] = kv.1
+                    lastKey = kv.0
                 }
-            } else if let kv = keyValue(trimmed), current[kv.0] == nil {
-                current[kv.0] = kv.1
+            } else if let kv = keyValue(trimmed) {
+                if current[kv.0] == nil {
+                    current[kv.0] = kv.1
+                    lastKey = kv.0
+                } else {
+                    lastKey = nil
+                }
             }
         }
         flush()
@@ -239,7 +261,7 @@ enum ConfigFiles {
     }
 
     /// `{name: US-1, type: ss, server: us.example.com, port: 8388}` → top-level pairs.
-    private static func flowMap(_ s: String) -> [String: String] {
+    static func flowMap(_ s: String) -> [String: String] {
         var body = Substring(s.trimmingCharacters(in: .whitespaces))
         if body.hasPrefix("{") { body = body.dropFirst() }
         if body.hasSuffix("}") { body = body.dropLast() }

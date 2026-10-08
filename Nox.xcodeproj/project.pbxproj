@@ -6,14 +6,59 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7B9AC065EC189B29FF936565 /* NoxTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 405C54664DE3BCDA03E1A90F /* NoxTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6E8EB1AE4999E5DE1E757AF2 /* Libbox.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77410E43DE84E61D02A33799 /* Libbox.xcframework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D38997C3F3C5F0085D92E768 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6877797090955CB3EA5436AC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 54E55FC4A55038B064839997;
+			remoteInfo = NoxTunnel;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		09A71FD1F9838EA8E8D8A47D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7B9AC065EC189B29FF936565 /* NoxTunnel.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		FEE3EF99759612969C6B03CC /* Nox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		405C54664DE3BCDA03E1A90F /* NoxTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoxTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		77410E43DE84E61D02A33799 /* Libbox.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Libbox.xcframework; sourceTree = "<group>"; };
+		07A216721E3AB7D0F61E170E /* Nox-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Nox-Info.plist"; sourceTree = "<group>"; };
+		A4CC9C8040E70039A7A65F56 /* NoxTunnel-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NoxTunnel-Info.plist"; sourceTree = "<group>"; };
+		C8DA70CD5A103D3F81775799 /* Nox.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Nox.entitlements; sourceTree = "<group>"; };
+		B5F508FADF9460D5F4A0C8EF /* NoxTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoxTunnel.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8E4826697B43B53C524C3BC5 /* Nox */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Nox;
+			sourceTree = "<group>";
+		};
+		C547C948BEF0AA06928A65C8 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		997E6B6DFDD9A5562ABFEC3B /* NoxTunnel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NoxTunnel;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,6 +71,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		86D989CA79A0D2B4AFB30A10 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6E8EB1AE4999E5DE1E757AF2 /* Libbox.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -33,14 +86,38 @@
 			isa = PBXGroup;
 			children = (
 				8E4826697B43B53C524C3BC5 /* Nox */,
+				997E6B6DFDD9A5562ABFEC3B /* NoxTunnel */,
+				C547C948BEF0AA06928A65C8 /* Shared */,
+				85117A43E306BD1E34F5EC1C /* Config */,
+				98C58F484F33E35FA0F55F75 /* Frameworks */,
 				A26C212D5ECA733049CBC858 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		85117A43E306BD1E34F5EC1C /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				07A216721E3AB7D0F61E170E /* Nox-Info.plist */,
+				C8DA70CD5A103D3F81775799 /* Nox.entitlements */,
+				A4CC9C8040E70039A7A65F56 /* NoxTunnel-Info.plist */,
+				B5F508FADF9460D5F4A0C8EF /* NoxTunnel.entitlements */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		98C58F484F33E35FA0F55F75 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				77410E43DE84E61D02A33799 /* Libbox.xcframework */,
+			);
+			path = Frameworks;
 			sourceTree = "<group>";
 		};
 		A26C212D5ECA733049CBC858 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				FEE3EF99759612969C6B03CC /* Nox.app */,
+				405C54664DE3BCDA03E1A90F /* NoxTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,13 +132,16 @@
 				9EB6FE5E5F1301CFB9557717 /* Sources */,
 				31650388EDF575D4AF4BCEB6 /* Frameworks */,
 				7C3E0D75EA5E47971473208E /* Resources */,
+				09A71FD1F9838EA8E8D8A47D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AE2AD3E819EB34B6C00021C3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8E4826697B43B53C524C3BC5 /* Nox */,
+				C547C948BEF0AA06928A65C8 /* Shared */,
 			);
 			name = Nox;
 			packageProductDependencies = (
@@ -69,6 +149,29 @@
 			productName = Nox;
 			productReference = FEE3EF99759612969C6B03CC /* Nox.app */;
 			productType = "com.apple.product-type.application";
+		};
+		54E55FC4A55038B064839997 /* NoxTunnel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 69B952F66292D0DCF0E6E063 /* Build configuration list for PBXNativeTarget "NoxTunnel" */;
+			buildPhases = (
+				CE42CED3B09BD012F763FB80 /* Sources */,
+				86D989CA79A0D2B4AFB30A10 /* Frameworks */,
+				BDA14CDB7960BB47D34C4358 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				997E6B6DFDD9A5562ABFEC3B /* NoxTunnel */,
+				C547C948BEF0AA06928A65C8 /* Shared */,
+			);
+			name = NoxTunnel;
+			packageProductDependencies = (
+			);
+			productName = NoxTunnel;
+			productReference = 405C54664DE3BCDA03E1A90F /* NoxTunnel.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +184,9 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					F8716B441FA85A0E8DF32A20 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					54E55FC4A55038B064839997 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -101,12 +207,20 @@
 			projectRoot = "";
 			targets = (
 				F8716B441FA85A0E8DF32A20 /* Nox */,
+				54E55FC4A55038B064839997 /* NoxTunnel */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		7C3E0D75EA5E47971473208E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BDA14CDB7960BB47D34C4358 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -123,7 +237,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CE42CED3B09BD012F763FB80 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AE2AD3E819EB34B6C00021C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 54E55FC4A55038B064839997 /* NoxTunnel */;
+			targetProxy = D38997C3F3C5F0085D92E768 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		BECA2033B4BE802FFD240BCA /* Debug */ = {
@@ -162,6 +291,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -173,6 +303,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_FAST_MATH = YES;
+				NOX_APP_GROUP = "group.$(NOX_BUNDLE_ID)";
+				NOX_BUNDLE_ID = com.example.nox;
 				SDKROOT = iphoneos;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
@@ -225,6 +357,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -236,6 +369,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_FAST_MATH = YES;
+				NOX_APP_GROUP = "group.$(NOX_BUNDLE_ID)";
+				NOX_BUNDLE_ID = com.example.nox;
 				SDKROOT = iphoneos;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -252,10 +387,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Nox.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Nox-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Nox;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна, чтобы сканировать QR-коды с конфигурациями серверов.";
@@ -270,8 +407,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.nox;
+				MARKETING_VERSION = 0.6;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(NOX_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -290,10 +427,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Nox.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Nox-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Nox;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Камера нужна, чтобы сканировать QR-коды с конфигурациями серверов.";
@@ -308,9 +447,83 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.nox;
+				MARKETING_VERSION = 0.6;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(NOX_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		29477B4D4B1AE52B8E52868D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/NoxTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/NoxTunnel-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Nox Tunnel";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.6;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lresolv",
+					"-framework",
+					Security,
+					"-framework",
+					SystemConfiguration,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(NOX_BUNDLE_ID).tunnel";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E7D300CE5364EAB23071924E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/NoxTunnel.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/NoxTunnel-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Nox Tunnel";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.6;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lresolv",
+					"-framework",
+					Security,
+					"-framework",
+					SystemConfiguration,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(NOX_BUNDLE_ID).tunnel";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -338,6 +551,15 @@
 			buildConfigurations = (
 				76A4799FF26021EC09AB0068 /* Debug */,
 				D505C75346CD9D71B31D8B66 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		69B952F66292D0DCF0E6E063 /* Build configuration list for PBXNativeTarget "NoxTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				29477B4D4B1AE52B8E52868D /* Debug */,
+				E7D300CE5364EAB23071924E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

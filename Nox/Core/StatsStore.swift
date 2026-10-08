@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// Traffic statistics. History is mock data from the design; the live session (demo
-/// engine meter) is added on top so the numbers move while connected.
+/// Traffic statistics from the core's counters (see `ConnectionManager.account`), kept as hourly
+/// buckets for 31 days in Application Support.
 @MainActor
 @Observable
 final class StatsStore {
@@ -23,126 +23,215 @@ final class StatsStore {
         let name: String
         let code: String
         let badge: Server.Badge
-        let gb: Double
+        let mb: Double
     }
 
     struct Snapshot {
         let caption: String
-        let totalGB: Double
-        let downGB: Double
-        let upGB: Double
+        let totalMB: Double
+        let downMB: Double
+        let upMB: Double
+        /// MB per bar.
         let bars: [Double]
         let labels: [String]
+        /// The bar for "now".
+        let current: Int
         let onlineMinutes: Int
+        /// 0 → no measurements.
         let avgPing: Int
         let top: [TopItem]
+
+        var isEmpty: Bool { totalMB < 0.01 && onlineMinutes == 0 }
     }
 
-    private(set) var liveDownMB = 0.0
-    private(set) var liveUpMB = 0.0
-    private(set) var liveSeconds = 0.0
-    private var liveByPlace: [String: (code: String, badge: Server.Badge, mb: Double)] = [:]
-
-    func record(downMB: Double, upMB: Double, seconds: Double, server: Server) {
-        liveDownMB += downMB
-        liveUpMB += upMB
-        liveSeconds += seconds
-        let key = server.city.isEmpty ? (server.badge == .home ? "home" : server.displayName(.en)) : server.city
-        var entry = liveByPlace[key] ?? (code: server.countryCode, badge: server.badge, mb: 0)
-        entry.mb += downMB + upMB
-        liveByPlace[key] = entry
+    /// One hour of tunnel use.
+    struct Bucket: Codable {
+        /// Hours since 1970.
+        var hour: Int
+        var down = 0.0
+        var up = 0.0
+        var seconds = 0.0
+        var pingSum = 0.0
+        var pingCount = 0
+        /// Place key → MB.
+        var places: [String: Double] = [:]
     }
 
-    // MARK: Mock history
+    struct Place: Codable {
+        var code: String
+        var badge: Server.Badge
+        var nameRU: String
+        var nameEN: String
+    }
 
-    private static let weekBars: [Double] = [2.1, 3.4, 1.8, 4.3, 2.9, 2.6, 1.3]
-    private static let dayBars: [Double] = [0.02, 0.01, 0.0, 0.0, 0.05, 0.12, 0.18, 0.22, 0.15, 0.2, 0.25, 0.1]
-    private static let monthBars: [Double] = {
-        var seed: UInt64 = 0x9E3779B97F4A7C15
-        var out: [Double] = []
-        for _ in 0..<23 {
-            seed = seed &* 6364136223846793005 &+ 1442695040888963407
-            out.append(0.9 + Double(seed >> 40) / Double(1 << 24) * 3.6)
+    private struct Stored: Codable {
+        var buckets: [Bucket]
+        var places: [String: Place]
+    }
+
+    private(set) var buckets: [Bucket] = []
+    private var places: [String: Place] = [:]
+    @ObservationIgnored private var lastSave = Date.distantPast
+    @ObservationIgnored private var dirty = false
+
+    private static let keepHours = 31 * 24
+    private static var fileURL: URL { Persist.supportDirectory.appendingPathComponent("stats.json") }
+
+    init() {
+        guard let data = try? Data(contentsOf: Self.fileURL),
+              let stored = try? JSONDecoder().decode(Stored.self, from: data) else { return }
+        buckets = stored.buckets.sorted { $0.hour < $1.hour }
+        places = stored.places
+        prune()
+    }
+
+    static func hour(_ date: Date) -> Int { Int((date.timeIntervalSince1970 / 3600).rounded(.down)) }
+
+    // MARK: Recording
+
+    func record(downMB: Double, upMB: Double, seconds: Double, server: Server, at date: Date = Date()) {
+        let down = max(0, downMB), up = max(0, upMB), secs = max(0, seconds)
+        guard down + up > 0 || secs > 0 else { return }
+        let key = Self.placeKey(server)
+        places[key] = Place(code: server.countryCode, badge: server.badge,
+                            nameRU: server.displayName(.ru), nameEN: server.displayName(.en))
+        mutate(at: date) { b in
+            b.down += down
+            b.up += up
+            b.seconds += secs
+            if down + up > 0 { b.places[key, default: 0] += down + up }
         }
-        return out + weekBars
-    }()
+    }
 
-    func snapshot(_ period: Period, _ lang: Lang) -> Snapshot {
-        let liveGB = (liveDownMB + liveUpMB) / 1024
-        let liveDownGB = liveDownMB / 1024
-        let liveMinutes = Int(liveSeconds / 60)
-        var bars: [Double]
+    func recordPing(_ ms: Int, at date: Date = Date()) {
+        guard ms > 0 else { return }
+        mutate(at: date) { b in
+            b.pingSum += Double(ms)
+            b.pingCount += 1
+        }
+    }
+
+    /// Writes pending changes (app going to background).
+    func flush() {
+        if dirty { save() }
+    }
+
+    func reset() {
+        buckets = []
+        places = [:]
+        save()
+    }
+
+    private func mutate(at date: Date, _ body: (inout Bucket) -> Void) {
+        let hour = Self.hour(date)
+        if let i = buckets.lastIndex(where: { $0.hour == hour }) {
+            body(&buckets[i])
+        } else {
+            var bucket = Bucket(hour: hour)
+            body(&bucket)
+            let at = buckets.firstIndex { $0.hour > hour } ?? buckets.endIndex
+            buckets.insert(bucket, at: at)
+            prune()
+        }
+        dirty = true
+        if Date().timeIntervalSince(lastSave) > 30 { save() }
+    }
+
+    private func prune() {
+        let oldest = Self.hour(Date()) - Self.keepHours
+        buckets.removeAll { $0.hour < oldest }
+        let used = Set(buckets.flatMap { $0.places.keys })
+        places = places.filter { used.contains($0.key) }
+    }
+
+    private func save() {
+        dirty = false
+        lastSave = Date()
+        guard let data = try? JSONEncoder().encode(Stored(buckets: buckets, places: places)) else { return }
+        try? data.write(to: Self.fileURL, options: .atomic)
+    }
+
+    /// City, else "home" / the server's name.
+    static func placeKey(_ server: Server) -> String {
+        if !server.city.isEmpty { return server.city }
+        return server.badge == .home ? "home" : server.displayName(.en)
+    }
+
+    // MARK: Reading
+
+    func snapshot(_ period: Period, _ lang: Lang, now: Date = Date()) -> Snapshot {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        let slots: [(start: Date, end: Date)]
         let caption: String
-        let online: Int
-        let ping: Int
-        let topBase: [(String, String, Server.Badge, Double)]
-
         switch period {
         case .day:
-            bars = Self.dayBars
+            slots = (0..<12).map { i in
+                (cal.date(byAdding: .hour, value: i * 2, to: today) ?? today,
+                 cal.date(byAdding: .hour, value: i * 2 + 2, to: today) ?? today)
+            }
             caption = lang == .ru ? "Трафик за сегодня" : "Traffic today"
-            online = 221
-            ping = 39
-            topBase = [("amsterdam", "NL", .none, 0.8), ("frankfurt", "DE", .none, 0.3), ("home", "", .home, 0.2)]
-        case .week:
-            bars = Self.weekBars
-            caption = lang == .ru ? "Трафик за 7 дней" : "Traffic, 7 days"
-            online = 31 * 60 + 12
-            ping = 41
-            topBase = [("amsterdam", "NL", .none, 9.8), ("frankfurt", "DE", .none, 5.1), ("home", "", .home, 2.2)]
-        case .month:
-            bars = Self.monthBars
-            caption = lang == .ru ? "Трафик за 30 дней" : "Traffic, 30 days"
-            online = 124 * 60 + 22
-            ping = 44
-            topBase = [("amsterdam", "NL", .none, 34.2), ("frankfurt", "DE", .none, 18.0), ("home", "", .home, 7.6)]
+        case .week, .month:
+            let count = period == .week ? 7 : 30
+            slots = (0..<count).map { i in
+                let start = cal.date(byAdding: .day, value: i - (count - 1), to: today) ?? today
+                return (start, cal.date(byAdding: .day, value: 1, to: start) ?? start)
+            }
+            caption = period == .week ? (lang == .ru ? "Трафик за 7 дней" : "Traffic, 7 days")
+                                      : (lang == .ru ? "Трафик за 30 дней" : "Traffic, 30 days")
         }
-        if !bars.isEmpty { bars[bars.count - 1] += liveGB }
+        let edges = slots.map { (Self.hour($0.start), Self.hour($0.end)) }
+        let lo = edges.first?.0 ?? 0, hi = edges.last?.1 ?? 0
 
-        let total = bars.reduce(0, +)
-        let down = total * 0.918 + liveDownGB * 0.082
-
-        var top: [String: (code: String, badge: Server.Badge, gb: Double)] = [:]
-        for t in topBase { top[t.0] = (code: t.1, badge: t.2, gb: t.3) }
-        for (key, v) in liveByPlace {
-            var e = top[key] ?? (code: v.code, badge: v.badge, gb: 0)
-            e.gb += v.mb / 1024
-            top[key] = e
+        var bars = Array(repeating: 0.0, count: slots.count)
+        var down = 0.0, up = 0.0, seconds = 0.0, pingSum = 0.0, pingCount = 0
+        var byPlace: [String: Double] = [:]
+        for b in buckets where b.hour >= lo && b.hour < hi {
+            if let i = edges.firstIndex(where: { b.hour >= $0.0 && b.hour < $0.1 }) { bars[i] += b.down + b.up }
+            down += b.down
+            up += b.up
+            seconds += b.seconds
+            pingSum += b.pingSum
+            pingCount += b.pingCount
+            for (key, mb) in b.places { byPlace[key, default: 0] += mb }
         }
-        let items = top.map { key, v -> TopItem in
+
+        let top = byPlace.map { key, mb -> TopItem in
+            let place = places[key]
             let name: String
             if key == "home" { name = lang == .ru ? "Домашний сервер" : "Home server" }
             else if Countries.cities[key] != nil { name = Countries.city(key, lang) }
-            else { name = key }
-            return TopItem(id: key, name: name, code: v.code, badge: v.badge, gb: v.gb)
+            else { name = (lang == .ru ? place?.nameRU : place?.nameEN) ?? key }
+            return TopItem(id: key, name: name, code: place?.code ?? "", badge: place?.badge ?? .none, mb: mb)
         }
-        .sorted { $0.gb > $1.gb }
+        .sorted { $0.mb > $1.mb }
 
-        return Snapshot(caption: caption, totalGB: total, downGB: min(down, total), upGB: max(0, total - min(down, total)),
-                        bars: bars, labels: labels(period, count: bars.count, lang),
-                        onlineMinutes: online + liveMinutes, avgPing: ping, top: Array(items.prefix(4)))
+        let nowHour = Self.hour(now)
+        let current = edges.firstIndex { nowHour >= $0.0 && nowHour < $0.1 } ?? (slots.count - 1)
+        return Snapshot(caption: caption, totalMB: down + up, downMB: down, upMB: up,
+                        bars: bars, labels: labels(period, slots: slots.map(\.start), lang), current: current,
+                        onlineMinutes: Int(seconds / 60), avgPing: pingCount > 0 ? Int((pingSum / Double(pingCount)).rounded()) : 0,
+                        top: Array(top.prefix(4)))
     }
 
-    private func labels(_ period: Period, count: Int, _ lang: Lang) -> [String] {
+    private func labels(_ period: Period, slots: [Date], _ lang: Lang) -> [String] {
         let cal = Calendar.current
-        let today = Date()
         switch period {
         case .day:
-            return (0..<count).map { $0 % 3 == 0 ? "\($0 * 2)" : "" }
+            return slots.indices.map { $0 % 3 == 0 ? "\($0 * 2)" : "" }
         case .week:
             let f = DateFormatter()
             f.locale = lang.locale
             let symbols = f.shortStandaloneWeekdaySymbols ?? []
-            return (0..<count).map { i in
-                guard let d = cal.date(byAdding: .day, value: i - (count - 1), to: today), !symbols.isEmpty else { return "" }
+            return slots.map { d in
+                guard !symbols.isEmpty else { return "" }
                 let s = symbols[(cal.component(.weekday, from: d) - 1) % symbols.count]
                 return s.prefix(1).uppercased() + s.dropFirst()
             }
         case .month:
-            return (0..<count).map { i in
-                let back = count - 1 - i
-                guard back % 7 == 0, let d = cal.date(byAdding: .day, value: -back, to: today) else { return "" }
-                return "\(cal.component(.day, from: d))"
+            return slots.indices.map { i in
+                let back = slots.count - 1 - i
+                return back % 7 == 0 ? "\(cal.component(.day, from: slots[i]))" : ""
             }
         }
     }

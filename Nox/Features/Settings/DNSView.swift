@@ -42,8 +42,8 @@ struct DNSView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                Caption(text: settings.t("DNS-запросы идут внутри туннеля — провайдер их не видит.",
-                                         "DNS queries go inside the tunnel, so your ISP can't see them."))
+                Caption(text: settings.t("Этот DNS работает внутри туннеля: провайдер не видит запросы. Сайты, которые идут напрямую (например, российские в пресете «Россия напрямую»), резолвятся системным DNS — так CDN отдают ближайшие серверы.",
+                                         "This DNS runs inside the tunnel, so your ISP can't see the queries. Sites that go direct (e.g. Russian ones with the Russia direct preset) use the system resolver, so CDNs pick nearby servers."))
                     .padding(.horizontal, 4)
             }
         }

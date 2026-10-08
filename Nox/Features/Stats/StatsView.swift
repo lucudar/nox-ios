@@ -18,12 +18,13 @@ struct StatsView: View {
                     .foregroundStyle(Ink.secondary)
                     .padding(.top, 30)
 
+                let total = Fmt.amount(snap.totalMB, settings.lang)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(Fmt.dec(snap.totalGB, 1, settings.lang))
+                    Text(total.value)
                         .font(.system(size: 64, weight: .light))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                    Text(Fmt.gbUnit(settings.lang))
+                    Text(total.unit)
                         .font(.system(size: 24, weight: .regular))
                         .foregroundStyle(Ink.secondary)
                 }
@@ -31,14 +32,21 @@ struct StatsView: View {
                 .padding(.top, 2)
 
                 HStack(spacing: 22) {
-                    Amount(symbol: "arrow.down", text: Fmt.gb(snap.downGB, settings.lang))
-                    Amount(symbol: "arrow.up", text: Fmt.gb(snap.upGB, settings.lang))
+                    Amount(symbol: "arrow.down", text: Fmt.size(snap.downMB, settings.lang))
+                    Amount(symbol: "arrow.up", text: Fmt.size(snap.upMB, settings.lang))
                 }
                 .padding(.top, 2)
 
-                BarChart(bars: snap.bars, labels: snap.labels, grown: grown)
+                BarChart(bars: snap.bars, labels: snap.labels, current: snap.current, grown: grown)
                     .frame(height: 230)
                     .padding(.top, 34)
+
+                if snap.isEmpty {
+                    Caption(text: settings.t("Здесь появится трафик через Nox: он считается по данным ядра, пока туннель включён.",
+                                             "Traffic through Nox shows up here: it's counted from the core while the tunnel is on."))
+                        .padding(.top, 18)
+                        .padding(.horizontal, 4)
+                }
 
                 RowDivider()
                     .padding(.top, 26)
@@ -56,7 +64,11 @@ struct StatsView: View {
                         .frame(width: 1, height: 58)
                         .padding(.horizontal, 18)
                     Metric(title: settings.t("Средний пинг", "Average ping")) {
-                        MetricValue(number: "\(snap.avgPing)", unit: Fmt.msUnit(settings.lang))
+                        if snap.avgPing > 0 {
+                            MetricValue(number: "\(snap.avgPing)", unit: Fmt.msUnit(settings.lang))
+                        } else {
+                            MetricValue(number: "—", unit: "")
+                        }
                     }
                 }
                 .padding(.vertical, 22)
@@ -70,11 +82,11 @@ struct StatsView: View {
                         .padding(.top, 34)
                         .padding(.bottom, 12)
 
-                    let maxGB = snap.top.map(\.gb).max() ?? 1
+                    let maxMB = snap.top.map(\.mb).max() ?? 1
                     GroupCard {
                         ForEach(Array(snap.top.enumerated()), id: \.element.id) { index, item in
                             if index > 0 { RowDivider(leading: 62) }
-                            TopRow(item: item, fraction: maxGB > 0 ? item.gb / maxGB : 0, grown: grown)
+                            TopRow(item: item, fraction: maxMB > 0 ? item.mb / maxMB : 0, grown: grown)
                         }
                     }
                 }
@@ -141,10 +153,11 @@ private struct MetricValue: View {
     }
 }
 
-/// Thin capsule bars, dim accent; the last one (today / now) is bright.
+/// Thin capsule bars, dim accent; the current one (today / now) is bright.
 private struct BarChart: View {
     let bars: [Double]
     let labels: [String]
+    let current: Int
     let grown: Bool
 
     @Environment(AppSettings.self) private var settings
@@ -156,7 +169,7 @@ private struct BarChart: View {
             GeometryReader { geo in
                 HStack(alignment: .bottom, spacing: 0) {
                     ForEach(bars.indices, id: \.self) { i in
-                        let isLast = i == bars.count - 1
+                        let isLast = i == current
                         let h = max(width, geo.size.height * CGFloat(bars[i] / peak))
                         Capsule()
                             .fill(isLast ? settings.accentColor : settings.accent.color(0.26))
@@ -168,7 +181,7 @@ private struct BarChart: View {
             }
             HStack(spacing: 0) {
                 ForEach(labels.indices, id: \.self) { i in
-                    let isLast = i == labels.count - 1
+                    let isLast = i == current
                     Text(labels[i])
                         .font(.system(size: 13, weight: isLast ? .bold : .regular))
                         .foregroundStyle(isLast ? Ink.primary : Ink.tertiary)
@@ -197,7 +210,7 @@ private struct TopRow: View {
                         .foregroundStyle(Ink.primary)
                         .lineLimit(1)
                     Spacer(minLength: 8)
-                    Text(Fmt.gb(item.gb, settings.lang))
+                    Text(Fmt.size(item.mb, settings.lang))
                         .font(.system(size: 15))
                         .foregroundStyle(Ink.secondary)
                         .monospacedDigit()

@@ -12,6 +12,28 @@ enum Fmt {
     static func gbUnit(_ lang: Lang) -> String { lang == .ru ? "ГБ" : "GB" }
 
     static func ms(_ v: Int, _ lang: Lang) -> String { "\(v) \(msUnit(lang))" }
+
+    /// Traffic amount: "4,2 МБ", "820 МБ", "3,4 ГБ".
+    static func amount(_ mb: Double, _ lang: Lang) -> (value: String, unit: String) {
+        let ru = lang == .ru
+        if mb >= 1024 {
+            let gb = mb / 1024
+            return (dec(gb, gb >= 100 ? 0 : 1, lang), ru ? "ГБ" : "GB")
+        }
+        let unit = ru ? "МБ" : "MB"
+        if mb >= 10 || mb <= 0 { return ("\(Int(mb.rounded()))", unit) }
+        return (dec(mb, 1, lang), unit)
+    }
+
+    static func size(_ mb: Double, _ lang: Lang) -> String {
+        let a = amount(mb, lang)
+        return "\(a.value) \(a.unit)"
+    }
+
+    /// Speed in Mbit/s: one decimal below 10.
+    static func speed(_ mbps: Double, _ lang: Lang) -> String {
+        dec(mbps, mbps < 10 ? 1 : 0, lang)
+    }
     static func gb(_ v: Double, _ lang: Lang) -> String { "\(dec(v, 1, lang)) \(gbUnit(lang))" }
 
     /// Session timer: 00:42:17.

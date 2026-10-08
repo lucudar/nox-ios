@@ -21,7 +21,7 @@ final class AppSettings {
         look = Persist.load(Key.look, default: Appearance())
         prefs = Persist.load(Key.prefs, default: Prefs())
         userPresets = Persist.load(Key.presets, default: [UserPreset]())
-        rules = Persist.load(Key.rules, default: DemoData.rules)
+        rules = Persist.load(Key.rules, default: [RouteRule]())
         L10n.lang = prefs.language
     }
 
@@ -81,14 +81,8 @@ final class AppSettings {
     func persistRules() { Persist.save(rules, Key.rules) }
 
     var tunnelOptions: TunnelOptions {
-        let dns = prefs.dnsPreset == .custom ? (prefs.customDNS.nilIfEmpty ?? "1.1.1.1") : prefs.dnsPreset.endpoint(prefs.dnsTransport)
-        return TunnelOptions(mode: prefs.mode, dns: "\(prefs.dnsTransport.title) \(dns)", killSwitch: prefs.killSwitch, rules: rules)
+        TunnelOptions(routing: prefs.routing, blockAds: prefs.blockAds, dnsPreset: prefs.dnsPreset,
+                      dnsTransport: prefs.dnsTransport, customDNS: prefs.customDNS, killSwitch: prefs.killSwitch,
+                      autoConnect: prefs.autoConnect, verboseLogs: prefs.verboseLogs, rules: rules)
     }
-}
-
-struct TunnelOptions: Equatable, Sendable {
-    var mode: RoutingMode
-    var dns: String
-    var killSwitch: Bool
-    var rules: [RouteRule]
 }

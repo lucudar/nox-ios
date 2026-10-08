@@ -10,20 +10,25 @@ struct SettingsView: View {
         @Bindable var settings = settings
         Screen(title: settings.t("Настройки", "Settings")) {
             VStack(spacing: 18) {
-                GroupCard {
-                    NavigationLink(value: Route.mode) {
-                        NavRow(glyph: .mode, title: settings.t("Режим", "Mode"), value: settings.prefs.mode.title(settings.lang))
+                VStack(alignment: .leading, spacing: 8) {
+                    GroupCard {
+                        NavigationLink(value: Route.routing) {
+                            NavRow(glyph: .mode, title: settings.t("Маршрутизация", "Routing"), value: settings.prefs.routing.title(settings.lang))
+                        }
+                        .buttonStyle(RowPressStyle())
+                        RowDivider(leading: inset)
+                        ToggleRow(glyph: .killSwitch, title: "Kill Switch", isOn: $settings.prefs.killSwitch)
+                        RowDivider(leading: inset)
+                        ToggleRow(glyph: .autoConnect, title: settings.t("Автоподключение", "Auto-connect"), isOn: $settings.prefs.autoConnect)
                     }
-                    .buttonStyle(RowPressStyle())
-                    RowDivider(leading: inset)
-                    ToggleRow(glyph: .killSwitch, title: "Kill Switch", isOn: $settings.prefs.killSwitch)
-                    RowDivider(leading: inset)
-                    ToggleRow(glyph: .autoConnect, title: settings.t("Автоподключение", "Auto-connect"), isOn: $settings.prefs.autoConnect)
+                    Caption(text: settings.t("Kill Switch: пока VPN включён, трафик идёт только через туннель — при обрыве интернет блокируется, а не утекает. Автоподключение: iOS сама поднимает туннель при смене сети, пока вы не отключите его вручную.",
+                                             "Kill switch: while the VPN is on, traffic only goes through the tunnel — on a drop it's blocked instead of leaking. Auto-connect: iOS brings the tunnel back on network changes until you disconnect manually."))
+                        .padding(.horizontal, 4)
                 }
 
                 GroupCard {
                     NavigationLink(value: Route.routes) {
-                        NavRow(glyph: .routes, title: settings.t("Маршруты", "Routes"), value: "\(settings.rules.count)")
+                        NavRow(glyph: .routes, title: settings.t("Свои правила", "Custom rules"), value: "\(settings.rules.count)")
                     }
                     .buttonStyle(RowPressStyle())
                     RowDivider(leading: inset)

@@ -32,15 +32,20 @@ final class ServerStore {
     private static var fileURL: URL { Persist.supportDirectory.appendingPathComponent("servers.json") }
 
     init() {
-        if let data = try? Data(contentsOf: Self.fileURL),
-           let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) {
-            groups = snapshot.groups
-            selectedID = snapshot.selectedID
-            autoSelect = snapshot.autoSelect
-        } else {
-            // First launch: the demo list from the design boards.
-            groups = DemoData.groups()
-            selectedID = groups.first?.servers.first?.id
+        // First launch starts empty: servers come from links, QR codes, files or subscriptions.
+        guard let data = try? Data(contentsOf: Self.fileURL),
+              let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) else { return }
+        // 0.x shipped a made-up demo list: drop it (and groups left empty by that).
+        var loaded = snapshot.groups.filter { !$0.isDemo }
+        for i in loaded.indices { loaded[i].servers.removeAll { $0.isDemo } }
+        loaded.removeAll { $0.isOwn && $0.servers.isEmpty }
+        groups = loaded
+        autoSelect = snapshot.autoSelect
+        selectedID = snapshot.selectedID
+        if server(selectedID) == nil { selectedID = allServers.first?.id }
+        if loaded.count != snapshot.groups.count
+            || loaded.map(\.servers.count) != snapshot.groups.filter({ !$0.isDemo }).map(\.servers.count) {
+            save()
         }
     }
 
@@ -193,12 +198,6 @@ final class ServerStore {
 
     func refresh(_ groupID: UUID) async throws {
         guard let g = groups.first(where: { $0.id == groupID }), let url = g.subscriptionURL else { return }
-        if g.isDemo {
-            try? await Task.sleep(nanoseconds: 700_000_000)
-            if let i = groups.firstIndex(where: { $0.id == groupID }) { groups[i].updatedAt = Date() }
-            save()
-            return
-        }
         let result = try await SubscriptionLoader.fetch(url)
         guard let i = groups.firstIndex(where: { $0.id == groupID }) else { return }
         let selectedLink = selected?.link

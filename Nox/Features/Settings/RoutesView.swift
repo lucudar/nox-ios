@@ -7,7 +7,7 @@ struct RoutesView: View {
     @State private var creating = false
 
     var body: some View {
-        Screen(title: settings.t("Маршруты", "Routes"), trailing: {
+        Screen(title: settings.t("Свои правила", "Custom rules"), trailing: {
             CircleButton(action: {
                 Haptics.tap()
                 creating = true
@@ -43,11 +43,9 @@ struct RoutesView: View {
                     .padding(.horizontal, 4)
                     .padding(.top, 4)
 
-                if settings.prefs.mode != .rules {
-                    Caption(text: settings.t("Сейчас включён режим «\(settings.prefs.mode.title(.ru))» — правила не применяются.",
-                                             "Mode is set to \(settings.prefs.mode.title(.en)) — rules are not applied."))
-                        .padding(.horizontal, 4)
-                }
+                Caption(text: settings.t("Правила работают поверх пресета «\(settings.prefs.routing.title(.ru))» и всегда проверяются первыми. GeoSite / GeoIP — имена списков SagerNet: telegram, youtube, ru, private…",
+                                         "Rules work on top of the \(settings.prefs.routing.title(.en)) preset and are always checked first. GeoSite / GeoIP are SagerNet list names: telegram, youtube, ru, private…"))
+                    .padding(.horizontal, 4)
             }
         }
         .sheet(item: $editing) { rule in

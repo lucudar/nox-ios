@@ -8,6 +8,7 @@ struct RootView: View {
     @Environment(ServerStore.self) private var servers
     @Environment(ConnectionManager.self) private var connection
     @Environment(StatsStore.self) private var stats
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var path: [Route] = []
     @State private var launched = false
@@ -30,12 +31,20 @@ struct RootView: View {
         .onChange(of: settings.tunnelOptions) { _, options in
             connection.applyOptions(options)
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { stats.flush() }
+        }
         .task {
             guard !launched else { return }
             launched = true
             connection.onTraffic = { [stats] down, up, seconds, server in
                 stats.record(downMB: down, upMB: up, seconds: seconds, server: server)
             }
+            connection.onLatency = { [stats] ms in
+                stats.recordPing(ms)
+            }
+            // The tunnel may have kept running (or been started by iOS) while the app was closed.
+            await connection.restore(servers: servers, options: settings.tunnelOptions)
             if settings.prefs.autoConnect, !connection.isActive, let server = servers.current {
                 connection.connect(server, options: settings.tunnelOptions)
             }
@@ -46,7 +55,7 @@ struct RootView: View {
     private func destination(_ route: Route) -> some View {
         switch route {
         case .settings: SettingsView()
-        case .mode: ModeView()
+        case .routing: RoutingView()
         case .routes: RoutesView()
         case .dns: DNSView()
         case .appearance: AppearanceView()

@@ -14,7 +14,7 @@ struct AppearanceView: View {
     var body: some View {
         Screen(title: settings.t("Оформление", "Appearance")) {
             VStack(alignment: .leading, spacing: 0) {
-                DialView(status: .connected(since: .distantPast), size: 150, interactive: false)
+                PowerButton(status: .connected(since: .distantPast), size: 150, interactive: false)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 22)
                     .padding(.bottom, 52)
@@ -411,7 +411,7 @@ private struct PresetTile: View {
             VStack(spacing: 8) {
                 ZStack {
                     NoxBackground(kind: look.background, theme: look.theme, accent: look.accent, compact: true)
-                    MiniDial(accent: look.accent, size: 46)
+                    MiniPower(accent: look.accent, size: 46)
                 }
                 .frame(width: 86, height: 86)
                 .clipShape(shape)

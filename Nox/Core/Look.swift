@@ -208,10 +208,54 @@ struct Appearance: Codable, Equatable, Sendable {
 
 struct Prefs: Codable, Equatable, Sendable {
     var language: Lang = .system
-    var mode: RoutingMode = .rules
-    var killSwitch = true
+    var routing: RoutingPreset = .russia
+    var blockAds = false
+    /// The VPN profile's includeAllNetworks: nothing leaves the device outside the tunnel.
+    var killSwitch = false
     var autoConnect = false
     var dnsPreset: DNSPreset = .cloudflare
     var dnsTransport: DNSTransport = .doh
     var customDNS = ""
+    /// sing-box log level info instead of warn.
+    var verboseLogs = false
+
+    init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case language, routing, blockAds, killSwitch, autoConnect, dnsPreset, dnsTransport, customDNS, verboseLogs
+        /// 0.5: rules / global / direct.
+        case mode
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        language = c.value(.language, .system)
+        let current = (try? c.decodeIfPresent(RoutingPreset.self, forKey: .routing)) ?? nil
+        if let current {
+            routing = current
+        } else if let old = try? c.decodeIfPresent(String.self, forKey: .mode) {
+            routing = old == "global" ? .global : (old == "direct" ? .custom : .russia)
+        }
+        blockAds = c.value(.blockAds, false)
+        // 0.x had a cosmetic kill switch that defaulted to on: start from off with the real one.
+        killSwitch = current == nil ? false : c.value(.killSwitch, false)
+        autoConnect = c.value(.autoConnect, false)
+        dnsPreset = c.value(.dnsPreset, .cloudflare)
+        dnsTransport = c.value(.dnsTransport, .doh)
+        customDNS = c.value(.customDNS, "")
+        verboseLogs = c.value(.verboseLogs, false)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(language, forKey: .language)
+        try c.encode(routing, forKey: .routing)
+        try c.encode(blockAds, forKey: .blockAds)
+        try c.encode(killSwitch, forKey: .killSwitch)
+        try c.encode(autoConnect, forKey: .autoConnect)
+        try c.encode(dnsPreset, forKey: .dnsPreset)
+        try c.encode(dnsTransport, forKey: .dnsTransport)
+        try c.encode(customDNS, forKey: .customDNS)
+        try c.encode(verboseLogs, forKey: .verboseLogs)
+    }
 }

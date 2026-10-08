@@ -3,7 +3,7 @@ name: Build iOS
 on:
   push:
     branches: [main]
-    paths-ignore: ["README.md"]
+    paths-ignore: ["README.md", "docs/**"]
   workflow_dispatch:
 
 permissions:
@@ -13,11 +13,15 @@ concurrency:
   group: ios-build
   cancel-in-progress: true
 
+env:
+  SING_BOX_VERSION: "1.14.2"
+  GO_VERSION: "1.26.8"
+
 jobs:
   build:
     name: Xcode 16 build
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +46,41 @@ jobs:
             git push origin HEAD:main
           fi
 
+      # ---------- sing-box core (Libbox.xcframework), cached per version + build script ----------
+      - name: Restore Libbox
+        id: libbox-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: Frameworks/Libbox.xcframework
+          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh') }}
+
+      - name: Set up Go
+        if: steps.libbox-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Build Libbox (sing-box ${{ env.SING_BOX_VERSION }})
+        id: libbox
+        if: steps.libbox-cache.outputs.cache-hit != 'true'
+        env:
+          PATCH_GO: "1"
+        run: |
+          set -o pipefail
+          bash tools/build_libbox.sh "$SING_BOX_VERSION" 2>&1 | tee build-libbox.log
+
+      - name: Save Libbox
+        if: steps.libbox-cache.outputs.cache-hit != 'true' && steps.libbox.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: Frameworks/Libbox.xcframework
+          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh') }}
+
+      - name: Bundle rule-sets
+        run: bash tools/fetch_rulesets.sh
+
+      # ---------- app + Packet Tunnel extension ----------
       - name: Build for Simulator
         id: sim
         run: |
@@ -72,8 +111,28 @@ jobs:
       - name: Package
         id: package
         run: |
+          set -e
           mkdir -p dist/Payload
           cp -R build/device/Build/Products/Release-iphoneos/Nox.app dist/Payload/
+          APP=dist/Payload/Nox.app
+          test -d "$APP/PlugIns/NoxTunnel.appex"
+          # Ad-hoc signature with the entitlements, so re-signing tools (and TrollStore) keep
+          # the Network Extension + App Group capabilities.
+          BUNDLE=$(grep -m1 -o 'NOX_BUNDLE_ID = [^;]*' Nox.xcodeproj/project.pbxproj | awk '{print $3}')
+          for t in Nox NoxTunnel; do
+            sed "s/\$(NOX_APP_GROUP)/group.$BUNDLE/g" "Config/$t.entitlements" > "$RUNNER_TEMP/$t.entitlements"
+          done
+          codesign --force --sign - --entitlements "$RUNNER_TEMP/NoxTunnel.entitlements" "$APP/PlugIns/NoxTunnel.appex"
+          codesign --force --sign - --entitlements "$RUNNER_TEMP/Nox.entitlements" "$APP"
+          {
+            echo "bundle: $BUNDLE"
+            du -sh "$APP" "$APP/PlugIns/NoxTunnel.appex"
+            ls -la "$APP/PlugIns/NoxTunnel.appex"
+            ls "$APP" | grep -c '\.srs$' | sed 's/^/rule-sets: /'
+            plutil -p "$APP/PlugIns/NoxTunnel.appex/Info.plist" | grep -E 'CFBundle(Identifier|Version|ShortVersionString)|NSExtension|NoxAppGroup' || true
+            codesign -d --entitlements - "$APP/PlugIns/NoxTunnel.appex" 2>&1 | tail -n 12 || true
+          } > "$RUNNER_TEMP/package.txt" 2>&1
+          cat "$RUNNER_TEMP/package.txt"
           (cd dist && zip -qry Nox-unsigned.ipa Payload && rm -rf Payload)
           (cd build/sim/Build/Products/Debug-iphonesimulator && zip -qry "$GITHUB_WORKSPACE/dist/Nox-simulator.zip" Nox.app)
           ls -la dist
@@ -93,17 +152,15 @@ jobs:
           TAG="v${VERSION}-${GITHUB_RUN_NUMBER}"
           echo "$TAG" > "$RUNNER_TEMP/tag.txt"
           {
-            echo "**Nox ${VERSION}**, сборка ${GITHUB_RUN_NUMBER} · $(xcodebuild -version | head -1) · коммит ${SHORT}"
+            echo "**Nox ${VERSION}**, сборка ${GITHUB_RUN_NUMBER} · $(xcodebuild -version | head -1) · sing-box ${SING_BOX_VERSION} · коммит ${SHORT}"
             echo
             cat .github/release-notes.md
           } > "$RUNNER_TEMP/notes.md"
-          # old rolling pre-release from the first setup
-          gh release delete latest-build --yes --cleanup-tag 2>/dev/null || true
           gh release create "$TAG" dist/Nox-unsigned.ipa dist/Nox-simulator.zip \
             --target "$GITHUB_SHA" --latest \
             --title "Nox ${VERSION} (${GITHUB_RUN_NUMBER})" \
             --notes-file "$RUNNER_TEMP/notes.md"
-          # keep the 10 newest build releases (tags like v0.5-12); other releases are left alone
+          # keep the 10 newest build releases (tags like v0.6-12); other releases are left alone
           gh release list --limit 100 --json tagName,createdAt \
             --jq '[.[] | select(.tagName | test("^v[0-9.]+-[0-9]+$"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
             while read -r old; do gh release delete "$old" --yes --cleanup-tag || true; done
@@ -119,17 +176,20 @@ jobs:
             echo "run_number: $GITHUB_RUN_NUMBER"
             echo "sha: $GITHUB_SHA"
             echo "xcode: $(xcodebuild -version | tr '\n' ' ')"
+            echo "libbox: cache-hit=${{ steps.libbox-cache.outputs.cache-hit }} build=${{ steps.libbox.outcome }}"
             echo "simulator: ${{ steps.sim.outcome }}"
             echo "device: ${{ steps.device.outcome }}"
             echo "package: ${{ steps.package.outcome }}"
             echo "release: ${{ steps.release.outcome }} $(cat "$RUNNER_TEMP/tag.txt" 2>/dev/null)"
+            echo
+            cat "$RUNNER_TEMP/package.txt" 2>/dev/null || true
           } > "$R/summary.txt"
-          for f in build-sim build-device; do
+          for f in build-libbox build-sim build-device; do
             [ -f "$f.log" ] || continue
             sed "s#$GITHUB_WORKSPACE/##g" "$f.log" > "$R/$f.full"
-            grep -E "error:|warning:|BUILD SUCCEEDED|BUILD FAILED" "$R/$f.full" | sort | uniq | head -n 300 > "$R/$f-issues.txt" || true
+            grep -E "error:|warning:|BUILD SUCCEEDED|BUILD FAILED|^#|undefined" "$R/$f.full" | sort | uniq | head -n 300 > "$R/$f-issues.txt" || true
             grep -A 30 "The following build commands failed" "$R/$f.full" > "$R/$f-failed.txt" || true
-            tail -n 60 "$R/$f.full" > "$R/$f-tail.txt"
+            tail -n 80 "$R/$f.full" > "$R/$f-tail.txt"
             rm "$R/$f.full"
           done
           cd "$RUNNER_TEMP"

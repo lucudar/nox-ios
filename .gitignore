@@ -4,3 +4,5 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 .DS_Store
+Frameworks/
+Nox/Resources/RuleSets/*.srs

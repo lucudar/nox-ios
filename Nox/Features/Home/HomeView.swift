@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Home: the power button and connection status, the current server, and a bottom bar with
+/// Servers and Settings.
 struct HomeView: View {
     let openSettings: () -> Void
 
@@ -13,23 +15,9 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                CircleButton(action: {
-                    Haptics.tap()
-                    openSettings()
-                }) {
-                    SlidersGlyph(color: Ink.primary)
-                }
-                .accessibilityLabel(settings.t("Настройки", "Settings"))
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 6)
+            Spacer(minLength: 24)
 
-            Spacer(minLength: 12)
-                .frame(maxHeight: 110)
-
-            DialView(status: connection.status) {
+            PowerButton(status: connection.status, dimmed: servers.isEmpty) {
                 Haptics.press()
                 guard let server = servers.current else {
                     showServers = true
@@ -38,17 +26,30 @@ struct HomeView: View {
                 connection.toggle(server, options: settings.tunnelOptions)
             }
 
-            StatusBlock()
-                .padding(.top, 34)
+            StatusBlock(hasServers: !servers.isEmpty)
+                .padding(.top, 40)
 
-            Spacer(minLength: 16)
+            Spacer(minLength: 12)
 
-            ServerPill(server: servers.current, auto: servers.autoSelect) {
+            if let server = servers.current {
+                ServerChip(server: server, auto: servers.autoSelect) {
+                    Haptics.tap()
+                    showServers = true
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+                .transition(.opacity)
+            }
+
+            BottomBar(onServers: {
                 Haptics.tap()
                 showServers = true
-            }
+            }, onSettings: {
+                Haptics.tap()
+                openSettings()
+            })
             .padding(.horizontal, 16)
-            .padding(.bottom, 10)
+            .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background { NoxBackground().ignoresSafeArea() }
@@ -70,7 +71,7 @@ struct HomeView: View {
         }
         .onChange(of: servers.current?.id) { _, _ in
             guard connection.isActive, let server = servers.current else { return }
-            connection.reconnect(server, options: settings.tunnelOptions)
+            connection.switchServer(server, options: settings.tunnelOptions)
         }
         .onChange(of: connection.status) { _, newValue in
             switch newValue {
@@ -82,9 +83,11 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Status under the dial
+// MARK: - Status under the button
 
 private struct StatusBlock: View {
+    let hasServers: Bool
+
     @Environment(AppSettings.self) private var settings
     @Environment(ConnectionManager.self) private var connection
 
@@ -93,7 +96,7 @@ private struct StatusBlock: View {
             switch connection.status {
             case .disconnected:
                 VStack(spacing: 10) {
-                    Text(settings.t("Не подключено", "Not connected"))
+                    Text(hasServers ? settings.t("Не подключено", "Not connected") : settings.t("Добавьте сервер", "Add a server"))
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(Ink.primary)
                     if let error = connection.lastError {
@@ -101,7 +104,15 @@ private struct StatusBlock: View {
                             .font(.system(size: 14))
                             .foregroundStyle(PingColor.bad.color)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
+                            .lineLimit(4)
+                            .padding(.horizontal, 36)
+                    } else if !hasServers {
+                        Text(settings.t("Ссылка, QR-код, файл конфигурации или подписка — в разделе «Серверы»",
+                                        "A link, QR code, config file or subscription — in Servers"))
+                            .font(.system(size: 15))
+                            .foregroundStyle(Ink.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 44)
                     }
                 }
                 .transition(.opacity)
@@ -123,7 +134,7 @@ private struct StatusBlock: View {
                     .transition(.opacity)
             }
         }
-        .frame(height: 136, alignment: .top)
+        .frame(height: 132, alignment: .top)
         .frame(maxWidth: .infinity)
         .animation(.easeInOut(duration: 0.3), value: connection.status.key)
     }
@@ -148,60 +159,66 @@ private struct ConnectingTitle: View {
     }
 }
 
-/// Timer (blurs in), "● Защищено · 185.107.•••.••", live speeds.
+/// Timer, "● Защищено · 185.107.•••.••", live speed and latency.
 private struct ConnectedBlock: View {
     let since: Date
 
     @Environment(AppSettings.self) private var settings
     @Environment(ConnectionManager.self) private var connection
 
-    @State private var timerShown = false
-    @State private var detailsShown = false
+    @State private var shown = false
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             TimelineView(.periodic(from: since, by: 1)) { context in
                 Text(Fmt.clock(max(0, context.date.timeIntervalSince(since))))
-                    .font(.system(size: 60, weight: .light))
+                    .font(.system(size: 52, weight: .light))
                     .monospacedDigit()
                     .foregroundStyle(Ink.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
-            .blur(radius: timerShown ? 0 : 14)
-            .opacity(timerShown ? 1 : 0)
-            .scaleEffect(timerShown ? 1 : 0.94)
 
             HStack(spacing: 6) {
                 Circle()
                     .fill(settings.accentColor)
-                    .frame(width: 7, height: 7)
+                    .frame(width: 6, height: 6)
                 Text(settings.t("Защищено", "Protected"))
                     .foregroundStyle(Ink.primary.opacity(0.88))
-                Text("·")
-                    .foregroundStyle(Ink.tertiary)
-                Text(ConnectionManager.masked(connection.ip))
-                    .foregroundStyle(Ink.secondary)
+                if !connection.ip.isEmpty {
+                    Text("·")
+                        .foregroundStyle(Ink.tertiary)
+                    if !connection.exitCountry.isEmpty {
+                        FlagView(code: connection.exitCountry, size: 14)
+                    }
+                    Text(ConnectionManager.masked(connection.ip))
+                        .foregroundStyle(Ink.secondary)
+                        .monospacedDigit()
+                }
             }
             .font(.system(size: 15))
-            .opacity(detailsShown ? 1 : 0)
-            .offset(y: detailsShown ? 0 : 6)
+            .animation(Motion.quick, value: connection.ip)
 
-            HStack(spacing: 24) {
+            HStack(spacing: 20) {
                 SpeedLabel(symbol: "arrow.down", value: connection.down)
                 SpeedLabel(symbol: "arrow.up", value: connection.up)
+                if let ms = connection.latency {
+                    Text(Fmt.ms(ms, settings.lang))
+                        .font(.system(size: 15))
+                        .foregroundStyle(PingColor.color(ms))
+                        .monospacedDigit()
+                        .contentTransition(.numericText(value: Double(ms)))
+                }
             }
-            .padding(.top, 8)
-            .opacity(detailsShown ? 1 : 0)
-            .offset(y: detailsShown ? 0 : 8)
+            .padding(.top, 2)
         }
+        .opacity(shown ? 1 : 0)
+        .offset(y: shown ? 0 : 6)
         .onAppear {
             if Date().timeIntervalSince(since) < 2 {
-                withAnimation(.easeOut(duration: 0.9).delay(0.35)) { timerShown = true }
-                withAnimation(.easeOut(duration: 0.5).delay(1.45)) { detailsShown = true }
+                withAnimation(.easeOut(duration: 0.6).delay(0.25)) { shown = true }
             } else {
-                timerShown = true
-                detailsShown = true
+                shown = true
             }
         }
     }
@@ -216,9 +233,9 @@ private struct SpeedLabel: View {
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: symbol)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(settings.accentColor)
-            Text(Fmt.dec(value, 1, settings.lang))
+            Text(Fmt.speed(value, settings.lang))
                 .foregroundStyle(Ink.primary)
                 .contentTransition(.numericText(value: value))
             Text(Fmt.speedUnit(settings.lang))
@@ -230,68 +247,96 @@ private struct SpeedLabel: View {
     }
 }
 
-// MARK: - Server pill
+// MARK: - Current server
 
-private struct ServerPill: View {
-    let server: Server?
+/// One line: flag, name, ping. Opens the server list.
+private struct ServerChip: View {
+    let server: Server
     let auto: Bool
     let action: () -> Void
 
     @Environment(AppSettings.self) private var settings
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: settings.radius, style: .continuous)
         Button(action: action) {
-            HStack(spacing: 12) {
-                if let server {
-                    ServerAvatar(server: server, size: 38)
-                        .overlay(alignment: .bottomTrailing) {
-                            if auto {
-                                BadgeDisc(kind: .auto, size: 16)
-                                    .offset(x: 3, y: 3)
-                            }
+            HStack(spacing: 10) {
+                ServerAvatar(server: server, size: 24)
+                    .overlay(alignment: .bottomTrailing) {
+                        if auto {
+                            BadgeDisc(kind: .auto, size: 12)
+                                .offset(x: 3, y: 3)
                         }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(server.displayName(settings.lang))
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Ink.primary)
-                        Text(subtitle(server))
-                            .font(.system(size: 14))
-                            .foregroundStyle(Ink.secondary)
                     }
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Ink.primary)
                     .lineLimit(1)
-                    Spacer(minLength: 8)
-                    PingText(server: server)
-                } else {
-                    BadgeDisc(kind: .globe, size: 38)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(settings.t("Нет серверов", "No servers"))
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Ink.primary)
-                        Text(settings.t("Нажмите, чтобы добавить", "Tap to add one"))
-                            .font(.system(size: 14))
-                            .foregroundStyle(Ink.secondary)
-                    }
-                    Spacer(minLength: 8)
-                }
+                PingText(server: server)
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Ink.tertiary)
             }
-            .padding(.leading, 14)
-            .padding(.trailing, 16)
-            .frame(height: 66)
-            .background(shape.fill(settings.surfaceColor.opacity(0.94)))
+            .padding(.horizontal, 16)
+            .frame(height: 44)
+            .background(Capsule().fill(settings.surfaceColor.opacity(0.6)))
+            .overlay(Capsule().strokeBorder(Ink.stroke, lineWidth: 1))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressStyle(scale: 0.97))
+        .accessibilityLabel(server.displayName(settings.lang))
+    }
+
+    private var title: String {
+        let name = server.displayName(settings.lang)
+        return auto ? settings.t("Авто", "Auto") + " · " + name : name
+    }
+}
+
+// MARK: - Bottom bar
+
+private struct BottomBar: View {
+    let onServers: () -> Void
+    let onSettings: () -> Void
+
+    @Environment(AppSettings.self) private var settings
+
+    var body: some View {
+        HStack(spacing: 10) {
+            BarButton(title: settings.t("Серверы", "Servers"), action: onServers) {
+                Image(systemName: "globe")
+                    .font(.system(size: 17, weight: .regular))
+            }
+            BarButton(title: settings.t("Настройки", "Settings"), action: onSettings) {
+                SlidersGlyph(color: Ink.primary)
+            }
+        }
+    }
+}
+
+private struct BarButton<Icon: View>: View {
+    let title: String
+    let action: () -> Void
+    @ViewBuilder let icon: () -> Icon
+
+    @Environment(AppSettings.self) private var settings
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: settings.radius, style: .continuous)
+        Button(action: action) {
+            HStack(spacing: 9) {
+                icon()
+                    .foregroundStyle(Ink.primary)
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Ink.primary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(shape.fill(settings.surfaceColor.opacity(0.92)))
             .overlay(shape.strokeBorder(Ink.stroke, lineWidth: 1))
             .contentShape(shape)
         }
-        .buttonStyle(PressStyle(scale: 0.98))
-        .accessibilityLabel(server.map { $0.displayName(settings.lang) } ?? settings.t("Выбрать сервер", "Choose server"))
-    }
-
-    private func subtitle(_ server: Server) -> String {
-        let base = server.subtitle(settings.lang)
-        return auto ? settings.t("Авто", "Auto") + " · " + base : base
+        .buttonStyle(PressStyle(scale: 0.97))
     }
 }
 

@@ -84,6 +84,6 @@ extension FontChoice {
 }
 
 extension Server {
-    /// Ping to show in lists: the last measurement (demo servers start with their design value).
+    /// Ping to show in lists: the last successful measurement.
     var shownPing: Int? { pingFailed ? nil : lastPing }
 }

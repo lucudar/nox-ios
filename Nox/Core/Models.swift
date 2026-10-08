@@ -98,8 +98,8 @@ struct Server: Identifiable, Codable, Hashable, Sendable {
     /// Original share link or raw config (WireGuard .conf, .ovpn, JSON…).
     var link = ""
     var badge: Badge = .none
+    /// Leftover from the 0.x demo list: such servers are dropped on load.
     var isDemo = false
-    var demoPing = 0
     var lastPing: Int?
     var pingFailed = false
 }
@@ -118,7 +118,6 @@ extension Server {
         link = c.value(.link, "")
         badge = c.value(.badge, .none)
         isDemo = c.value(.isDemo, false)
-        demoPing = c.value(.demoPing, 0)
         lastPing = c.value(.lastPing, nil)
         pingFailed = c.value(.pingFailed, false)
     }
@@ -183,23 +182,42 @@ extension ServerGroup {
 
 // MARK: - Routing, DNS
 
-enum RoutingMode: String, Codable, CaseIterable, Identifiable, Sendable {
-    case rules, global, direct
+/// What goes through the VPN. Presets are built from curated rule-sets (see `RuleSets`);
+/// the user's own rules always apply first.
+enum RoutingPreset: String, Codable, CaseIterable, Identifiable, Sendable {
+    case russia, blocked, global, custom
     var id: String { rawValue }
 
     func title(_ l: Lang) -> String {
         switch self {
-        case .rules: return l == .ru ? "Правила" : "Rules"
-        case .global: return l == .ru ? "Глобально" : "Global"
-        case .direct: return l == .ru ? "Напрямую" : "Direct"
+        case .russia: return l == .ru ? "Россия напрямую" : "Russia direct"
+        case .blocked: return l == .ru ? "Только заблокированное" : "Blocked sites only"
+        case .global: return l == .ru ? "Всё через VPN" : "Everything via VPN"
+        case .custom: return l == .ru ? "Только мои правила" : "My rules only"
         }
     }
 
     func details(_ l: Lang) -> String {
         switch self {
-        case .rules: return l == .ru ? "Трафик идёт по правилам из «Маршрутов»" : "Traffic follows the rules in Routes"
-        case .global: return l == .ru ? "Весь трафик через VPN" : "All traffic goes through VPN"
-        case .direct: return l == .ru ? "Всё напрямую, VPN только для DNS" : "Everything direct, VPN for DNS only"
+        case .russia:
+            return l == .ru ? "Российские сайты и IP — напрямую, остальное через VPN. Заблокированное в РФ — всегда через VPN"
+                : "Russian sites and IPs go direct, everything else via VPN. Sites blocked in Russia always use VPN"
+        case .blocked:
+            return l == .ru ? "Через VPN — только заблокированные в РФ сервисы: YouTube, Instagram, Discord, ChatGPT и другие"
+                : "Only services blocked in Russia use VPN: YouTube, Instagram, Discord, ChatGPT and more"
+        case .global:
+            return l == .ru ? "Весь трафик через сервер, кроме локальной сети" : "All traffic goes through the server, except the local network"
+        case .custom:
+            return l == .ru ? "Всё напрямую, кроме того, что указано в правилах" : "Everything direct except what your rules send to VPN"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .russia: return "house"
+        case .blocked: return "lock.open"
+        case .global: return "globe"
+        case .custom: return "list.bullet"
         }
     }
 }

@@ -1,61 +1,78 @@
 # Nox — VPN-клиент для iOS
 
-Nox — VPN/прокси-клиент для iPhone на SwiftUI (iOS 17+). Тёмный интерфейс с «циферблатом» подключения, серверы из подписок, ссылок и QR-кодов, статистика трафика и гибкое оформление. Значки по умолчанию — в стиле «Линия».
-
-> Сейчас приложение работает на **демо-движке**: подключение, трафик и внешний IP имитируются. Интерфейс, импорт и хранение серверов, подписки, пинг и статистика работают по-настоящему.
-
-## Как открыть
-
-1. Нужен **Xcode 16** или новее.
-2. Распакуйте архив и откройте `Nox.xcodeproj`.
-3. Выберите симулятор iPhone (iOS 17+) и нажмите **⌘R**.
-4. Чтобы запустить на своём iPhone, откройте **Signing & Capabilities** и выберите свою команду (Team). Если Xcode не принимает Bundle ID, замените `com.example.nox` на свой, например `com.yourname.nox`.
-
-Пока в проекте нет Network Extension, хватает бесплатного Apple ID.
+Nox — VPN/прокси-клиент для iPhone на SwiftUI (iOS 17+). Внутри — настоящий туннель: расширение **Packet Tunnel** с ядром **sing-box 1.14** (libbox). Серверы из подписок, ссылок, QR-кодов и файлов, маршрутизация с готовыми пресетами, статистика реального трафика и гибкое оформление.
 
 ## Что умеет
 
-- **Главный экран** — циферблат подключения с анимацией, таймер, скорость, внешний IP и быстрый выбор сервера.
-- **Серверы** — подписки по URL, импорт ссылкой, из буфера обмена, по QR-коду (камера или фото) и из файла, ручное добавление, TCP-пинг и автовыбор лучшего сервера, группы, переименование и удаление.
-  - Ссылки: `vless://`, `vmess://`, `trojan://`, `ss://`, `hysteria2://` / `hy2://`, `tuic://`, `wireguard://` / `wg://`, `awg://`, `ssh://` и другие схемы.
+- **Главный экран** — большая кнопка подключения, статус, таймер, скорость, внешний IP и страна выхода, задержка. Внизу две кнопки: **Серверы** и **Настройки**.
+- **Серверы** — подписки по URL, импорт ссылкой, из буфера обмена, по QR-коду (камера или фото) и из файла, ручное добавление, TCP-пинг в обход туннеля, автовыбор лучшего сервера, группы. Смена сервера при включённом VPN — без разрыва туннеля (горячая перезагрузка ядра).
+  - Ссылки: `vless://` (в том числе REALITY), `vmess://`, `trojan://`, `ss://` (включая 2022), `hysteria2://` / `hy2://`, `tuic://`, `wireguard://` / `wg://`, `ssh://` и другие.
   - Файлы: подписки (обычные и base64), конфиги sing-box и Xray (JSON), Clash (YAML), WireGuard `.conf`, OpenVPN `.ovpn`.
-- **Статистика** — трафик и время подключения за день, неделю и месяц.
-- **Настройки** — режим маршрутизации (по правилам / весь трафик / напрямую), свои правила, DNS (Cloudflare, Google, Quad9, AdGuard или свой; DoH / DoT / UDP), язык (русский / английский / как в системе) и логи.
-- **Оформление** — пресеты, акцентный цвет, 5 тем, фоны (в том числе своё фото), свечение, анимация циферблата, шрифт, стиль значков (Линия / Плитки / Эмодзи) и 4 иконки приложения.
+- **Маршрутизация** — готовые пресеты, которые работают из коробки:
+  - **Россия напрямую** — российские сайты (`.ru`, `.рф`, geosite `category-ru`) и российские IP идут напрямую, остальное через VPN; заблокированное в РФ — всегда через VPN.
+  - **Только заблокированное** — через VPN только то, что заблокировано или замедлено в РФ (списки itdoginfo/allow-domains: YouTube, Instagram, Discord, ChatGPT, Telegram и др.), остальное напрямую.
+  - **Всё через VPN** — весь трафик, кроме локальной сети.
+  - **Только мои правила** — всё напрямую, кроме ваших правил.
+  - Плюс блокировка рекламы (geosite `category-ads-all`) и **свои правила**: домен, суффикс, ключевое слово, IP/CIDR, `geosite:*`, `geoip:*` → VPN / напрямую / блок.
+  - Списки правил вшиты в приложение (первое подключение работает сразу) и обновляются ядром раз в сутки.
+- **DNS** — Cloudflare, Google, Quad9, AdGuard или свой; DoH / DoT / UDP, без утечек (DNS через туннель, российские домены — через локальный DNS в пресетах с прямым трафиком).
+- **Kill switch** (весь трафик только через туннель) и **автоподключение** (VPN On Demand).
+- **Статистика** — реальный трафик и время подключения по часам за день, неделю и месяц, топ стран и средняя задержка.
+- **Логи** — логи приложения и ядра sing-box, подробный режим.
+- **Оформление** — пресеты, акцентный цвет, темы, фоны (в том числе своё фото), свечение, анимация кнопки, шрифт, стиль значков и 4 иконки приложения.
 
-## Структура
+## Как это устроено
 
 ```
-Nox/
-├─ App/             точка входа и корневой экран
-├─ Core/            модели, хранилища, парсеры ссылок и конфигов, подписки, пинг, движок туннеля
-├─ Design/          компоненты, циферблат, фоны, флаги, значки
-├─ Features/        экраны: Home, Servers, Stats, Settings, Appearance
-└─ Assets.xcassets  иконки приложения и акцентный цвет
+ Nox.app (SwiftUI)                       App Group: group.<bundle id>                NoxTunnel.appex
+ ───────────────────                     ───────────────────────────                 ────────────────────────────
+ SingBoxConfig собирает JSON  ──write──▶  config.json                    ──read──▶   PacketTunnelProvider
+ SingBoxEngine                            RuleSets/*.srs, cache.db                    └─ libbox CommandServer (sing-box)
+  └─ NETunnelProviderManager ─start/stop──────────────────────────────────────────▶      ├─ TUN (fd от NEPacketTunnelFlow)
+  └─ sendProviderMessage("reload") ───────────────────────────────────────────────▶      ├─ маршрутизация, DNS, rule-set
+ CoreAPI ◀── Clash API 127.0.0.1:19090 (трафик, задержка, соединения) ──────────────      └─ outbound: VLESS/VMess/…/WG
+ LogsView ◀── box.log, error.txt ◀──────────────────────────────────────────────────── пишет ядро
 ```
 
-## Демо-движок
+- `Nox/Tunnel/` — сборка конфигурации sing-box из сервера и настроек (`SingBoxConfig`, `SingBoxOutbound`, `RuleSets`, `OpenVPNConfig`).
+- `Nox/Core/SingBoxEngine.swift` — профиль VPN (`NETunnelProviderManager`), старт/стоп, горячая перезагрузка, ошибки ядра. `CoreAPI.swift` — клиент Clash API.
+- `NoxTunnel/` — расширение: `PacketTunnelProvider` (запуск libbox) и `PlatformInterface` (TUN, маршруты, DNS, мониторинг сети для sing-box).
+- `Shared/AppGroup.swift` — общие пути и сообщения между приложением и расширением.
+- В симуляторе Packet Tunnel не работает, поэтому там подключается `DemoTunnelEngine`: он проверяет конфиг и показывает сценарий подключения без туннеля.
 
-Подключением управляет `ConnectionManager` (`Core/ConnectionManager.swift`) через протокол `TunnelEngine` (`Core/TunnelEngine.swift`). Сейчас там подключён `DemoTunnelEngine`: он показывает весь сценарий подключения, но настоящий туннель не поднимает.
+Исследование ядер (sing-box, Xray-core, mihomo) и план своего ядра — в [`docs/core-research.md`](docs/core-research.md).
 
-## Как подключить настоящий VPN
+## Как собрать
 
-1. Оформите платный аккаунт Apple Developer: без него не выдают entitlement для Network Extension.
-2. Добавьте таргет **Network Extension → Packet Tunnel Provider**.
-3. Включите у приложения и расширения **App Groups** (общий контейнер для конфигурации) и **Network Extensions → Packet Tunnel**.
-4. Встройте ядро в расширение: **sing-box** (libbox, собранный через gomobile) или Xray-core. Конфиг ядра собирайте из выбранного сервера и настроек (режим, правила, DNS) и кладите в App Group.
-5. Напишите свою реализацию `TunnelEngine` на `NETunnelProviderManager` (сохранить профиль, `startVPNTunnel()`, следить за `NEVPNStatus`) и передайте её в `ConnectionManager(engine:)` вместо демо-движка.
-6. Проверяйте на реальном iPhone: Packet Tunnel в симуляторе не работает.
+1. Нужны **macOS**, **Xcode 16+** и **Go 1.26** (`brew install go`).
+2. Соберите ядро: `bash tools/build_libbox.sh` → `Frameworks/Libbox.xcframework` (sing-box 1.14.2, ~10–20 минут при первой сборке).
+3. Скачайте списки правил: `bash tools/fetch_rulesets.sh` → `Nox/Resources/RuleSets/*.srs` (необязательно: без них ядро скачает списки при первом подключении).
+4. Откройте `Nox.xcodeproj`. Проект сгенерирован скриптом `tools/gen_project.py` — правьте настройки в нём и перезапускайте.
+
+### Запуск на iPhone
+
+Network Extension требует **платного аккаунта Apple Developer** (с бесплатным Apple ID приложение установится, но VPN не запустится).
+
+1. В настройках проекта (уровень проекта, не таргета) поменяйте `NOX_BUNDLE_ID` с `com.example.nox` на свой, например `com.yourname.nox`. От него берутся ID приложения, расширения (`.tunnel`) и App Group (`group.<id>`).
+2. В **Signing & Capabilities** обоих таргетов (Nox и NoxTunnel) выберите свою команду. Возможности App Groups и Network Extensions → Packet Tunnel уже прописаны в `Config/*.entitlements`.
+3. Запустите на устройстве (**⌘R**) и разрешите добавление конфигурации VPN.
 
 ## Сборка в GitHub Actions
 
-Каждый пуш в `main` собирается на macOS в Xcode 16 (`.github/workflows/build.yml`): одна сборка для симулятора, другая — неподписанная для iPhone. После успешной сборки в **Releases** появляется новый релиз `v<версия>-<номер сборки>` (например, `v0.5-3`), и он помечается как Latest. Хранятся 10 последних сборок.
+Каждый пуш в `main` собирается на macOS в Xcode 16 (`.github/workflows/build.yml`):
 
-- `Nox-unsigned.ipa` — для iPhone. Установить можно через Sideloadly, AltStore или SideStore: они подпишут сборку вашим Apple ID.
-- `Nox-simulator.zip` — для симулятора на Mac: распакуйте архив и перетащите `Nox.app` в окно симулятора.
+1. ядро `Libbox.xcframework` (gomobile, кэшируется по версии sing-box и скрипту сборки);
+2. списки правил;
+3. сборка для симулятора и неподписанная сборка для iPhone (приложение + расширение, ad-hoc подпись с entitlements);
+4. релиз `v<версия>-<номер сборки>` (например, `v0.6-12`) с пометкой Latest. Хранятся 10 последних сборок.
+
+- `Nox-unsigned.ipa` — для iPhone. Установить можно через Sideloadly, AltStore/SideStore или TrollStore. Для работы VPN нужна подпись сертификатом с правом Network Extension (платный аккаунт разработчика) или TrollStore.
+- `Nox-simulator.zip` — для симулятора на Mac с Apple Silicon (демо-движок).
 
 Постоянная ссылка на свежую сборку: `https://github.com/lucudar/nox-ios/releases/latest/download/Nox-unsigned.ipa`.
 
-Номер сборки записывается в приложение (`CFBundleVersion`). Версию меняйте в `MARKETING_VERSION` в настройках таргета.
+Номер сборки записывается в приложение и расширение (`CFBundleVersion`), версия — `MARKETING_VERSION` в `tools/gen_project.py`. Иконки рисует `tools/make_icons.py`; если PNG в репозитории нет, workflow сгенерирует и закоммитит их сам.
 
-Иконки приложения рисует скрипт `tools/make_icons.py` (без зависимостей). Если PNG в репозитории нет, workflow сгенерирует их сам и закоммитит.
+## Лицензии
+
+Ядро [sing-box](https://github.com/SagerNet/sing-box) распространяется по **GPL-3.0-or-later**; сборки Nox, в которые оно входит, при распространении должны соблюдать условия GPL (в том числе открытый исходный код). Списки правил: [SagerNet/sing-geosite](https://github.com/SagerNet/sing-geosite), [SagerNet/sing-geoip](https://github.com/SagerNet/sing-geoip), [itdoginfo/allow-domains](https://github.com/itdoginfo/allow-domains), [runetfreedom/russia-v2ray-rules-dat](https://github.com/runetfreedom/russia-v2ray-rules-dat).

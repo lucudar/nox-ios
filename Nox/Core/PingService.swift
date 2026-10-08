@@ -3,16 +3,11 @@ import Foundation
 import Network
 #endif
 
-/// Latency check. Real servers: TCP connect time to host:port (no ICMP on iOS without
-/// extra plumbing). Demo servers: simulated values around their design numbers.
+/// Latency check: TCP connect time to host:port (no ICMP on iOS without extra plumbing).
+/// It goes around the VPN interface: through the tunnel the connect would be answered locally
+/// by the core's TCP stack and always look instant.
 enum PingService {
     static func measure(_ server: Server) async -> Int? {
-        if server.isDemo {
-            try? await Task.sleep(nanoseconds: UInt64.random(in: 250_000_000...1_000_000_000))
-            let base = max(server.demoPing, 5)
-            let spread = max(2, base / 12)
-            return max(3, base + Int.random(in: -spread...spread))
-        }
         #if canImport(Network)
         if let ms = await tcpConnect(host: server.host, port: server.port, timeout: 3) { return ms }
         // UDP protocols (Hysteria2, TUIC, WireGuard…) usually still have TCP 443 open.
@@ -29,7 +24,10 @@ enum PingService {
     static func tcpConnect(host: String, port: Int, timeout: TimeInterval) async -> Int? {
         guard !host.isEmpty, (1...65535).contains(port),
               let nwPort = NWEndpoint.Port(rawValue: UInt16(port)) else { return nil }
-        let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: .tcp)
+        let parameters = NWParameters.tcp
+        // utun (VPN) interfaces are "other": measure over Wi-Fi / cellular directly.
+        parameters.prohibitedInterfaceTypes = [.other]
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: parameters)
         let gate = OnceGate()
         let start = DispatchTime.now().uptimeNanoseconds
         return await withCheckedContinuation { (cont: CheckedContinuation<Int?, Never>) in
