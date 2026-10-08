@@ -1,2 +1,2 @@
 ** BUILD FAILED **
-Nox/Features/Home/HomeView.swift:32:13: error: cannot find 'DialView' in scope
+Nox/Core/ServerStore.swift:42:22: error: cannot find 'DemoData' in scope

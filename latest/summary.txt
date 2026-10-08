@@ -1,6 +1,6 @@
-run: https://github.com/lucudar/nox-ios/actions/runs/37729711199
-run_number: 6
-sha: 0ba6bdb30b289ab1f07129a6bcc9d60b4c3c4f7a
+run: https://github.com/lucudar/nox-ios/actions/runs/37729742172
+run_number: 7
+sha: 81f5ca203542415b4f7cc5818dee6604475216df
 xcode: Xcode 16.4 Build version 16F6 
 simulator: failure
 device: skipped

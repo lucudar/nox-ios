@@ -1,7 +1,5 @@
 The following build commands failed:
-	SwiftCompile normal arm64 Nox/Features/Home/HomeView.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal arm64 Compiling\ L10n.swift,\ AddSubscriptionView.swift,\ AppIconArt.swift,\ Format.swift,\ StatsView.swift,\ Countries.swift,\ HomeView.swift,\ ConnectionManager.swift,\ SettingsView.swift Nox/Core/L10n.swift Nox/Features/Servers/AddSubscriptionView.swift Nox/Design/AppIconArt.swift Nox/Core/Format.swift Nox/Features/Stats/StatsView.swift Nox/Core/Countries.swift Nox/Features/Home/HomeView.swift Nox/Core/ConnectionManager.swift Nox/Features/Settings/SettingsView.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal x86_64 Compiling\ L10n.swift,\ AddSubscriptionView.swift,\ AppIconArt.swift,\ Format.swift,\ StatsView.swift,\ Countries.swift,\ HomeView.swift,\ ConnectionManager.swift,\ SettingsView.swift Nox/Core/L10n.swift Nox/Features/Servers/AddSubscriptionView.swift Nox/Design/AppIconArt.swift Nox/Core/Format.swift Nox/Features/Stats/StatsView.swift Nox/Core/Countries.swift Nox/Features/Home/HomeView.swift Nox/Core/ConnectionManager.swift Nox/Features/Settings/SettingsView.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal x86_64 Nox/Features/Home/HomeView.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal arm64 Compiling\ Route.swift,\ ShareLinkParser.swift,\ SettingsIcon.swift,\ LogsView.swift,\ ServerStore.swift,\ NoxBackground.swift,\ LanguageView.swift,\ RGB.swift Nox/Features/Settings/Route.swift Nox/Core/ShareLinkParser.swift Nox/Design/SettingsIcon.swift Nox/Features/Settings/LogsView.swift Nox/Core/ServerStore.swift Nox/Design/NoxBackground.swift Nox/Features/Settings/LanguageView.swift Nox/Core/RGB.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal arm64 Nox/Core/ServerStore.swift (in target 'Nox' from project 'Nox')
 	Building project Nox with scheme Nox and configuration Debug
-(5 failures)
+(3 failures)
