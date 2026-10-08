@@ -1,60 +1,80 @@
-SwiftCompile normal arm64 Nox/Features/Settings/LanguageView.swift (in target 'Nox' from project 'Nox')
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0-simulator -dynamiclib -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -Lbuild/sim/Build/Products/Debug-iphonesimulator -Fbuild/sim/Build/Products/Debug-iphonesimulator -install_name @rpath/NoxTunnel.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel_dependency_info.dat -o build/sim/Build/Products/Debug-iphonesimulator/NoxTunnel.appex/__preview.dylib
+
+ProcessInfoPlistFile build/sim/Build/Products/Debug-iphonesimulator/NoxTunnel.appex/Info.plist Config/NoxTunnel-Info.plist (in target 'NoxTunnel' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    builtin-infoPlistUtility Config/NoxTunnel-Info.plist -producttype com.apple.product-type.app-extension -expandbuildsettings -format binary -platform iphonesimulator -o build/sim/Build/Products/Debug-iphonesimulator/NoxTunnel.appex/Info.plist
+
+SwiftDriver NoxTunnel normal arm64 com.apple.xcode.tools.swift.compiler (in target 'NoxTunnel' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    builtin-SwiftDriver -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name NoxTunnel -Onone -enforce-exclusivity\=checked @build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios17.0-simulator -g -module-cache-path build/sim/ModuleCache.noindex -Xfrontend -serialize-debugging-options -application-extension -enable-testing -index-store-path build/sim/Index.noindex/DataStore -swift-version 5 -I build/sim/Build/Products/Debug-iphonesimulator -F build/sim/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64 -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc build/sim/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.swiftmodule -validate-clang-modules-once -clang-build-session-file build/sim/ModuleCache.noindex/Session.modulevalidation -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel_const_extract_protocols.json -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-generated-files.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-own-target-headers.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-all-target-headers.hmap -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-project-headers.hmap -Xcc -Ibuild/sim/Build/Products/Debug-iphonesimulator/include -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources-normal/arm64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources/arm64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel-Swift.h -working-directory /Users/runner/work/nox-ios/nox-ios -experimental-emit-module-separately -disable-cmo
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ NoxTunnel (in target 'NoxTunnel' from project 'Nox')
+
+EmitSwiftModule normal arm64 (in target 'NoxTunnel' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    
+NoxTunnel/PlatformInterface.swift:148:88: error: 'NWPath' is ambiguous for type lookup in this context
+    private func update(_ listener: any LibboxInterfaceUpdateListenerProtocol, _ path: NWPath) {
+                                                                                       ^~~~~~
+Network.NWPath:2:15: note: found this candidate
+public struct NWPath : Equatable, CustomDebugStringConvertible, Sendable {
+              ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/System/Library/Frameworks/NetworkExtension.framework/Headers/NWPath.h:52:12: note: found this candidate
+@interface NWPath : NSObject
+           ^
+NoxTunnel/PlatformInterface.swift:161:42: error: 'NWPath' is ambiguous for type lookup in this context
+    private static func describe(_ path: NWPath) -> String {
+                                         ^~~~~~
+Network.NWPath:2:15: note: found this candidate
+public struct NWPath : Equatable, CustomDebugStringConvertible, Sendable {
+              ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/System/Library/Frameworks/NetworkExtension.framework/Headers/NWPath.h:52:12: note: found this candidate
+@interface NWPath : NSObject
+           ^
+NoxTunnel/PlatformInterface.swift:229:10: error: 'autoDetectInterfaceControl' has been renamed to 'autoDetectControl(_:)'
+    func autoDetectInterfaceControl(_ fd: Int32) throws {}
+         ^~~~~~~~~~~~~~~~~~~~~~~~~~
+         autoDetectControl
+Libbox.LibboxPlatformInterfaceProtocol.autoDetectInterfaceControl:3:8: note: 'autoDetectInterfaceControl' was obsoleted in Swift 3
+  func autoDetectInterfaceControl(_ fd: Int32) throws}
+       ^
+NoxTunnel/PlatformInterface.swift:228:10: error: 'usePlatformAutoDetectInterfaceControl()' has been renamed to 'usePlatformAutoDetectControl()'
+    func usePlatformAutoDetectInterfaceControl() -> Bool { false }
+         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         usePlatformAutoDetectControl
+Libbox.LibboxPlatformInterfaceProtocol.usePlatformAutoDetectInterfaceControl:3:8: note: 'usePlatformAutoDetectInterfaceControl()' was obsoleted in Swift 3
+  func usePlatformAutoDetectInterfaceControl() -> Bool}
+       ^
+
+Failed frontend command:
+/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types NoxTunnel/PacketTunnelProvider.swift NoxTunnel/PlatformInterface.swift NoxTunnel/RunBlocking.swift Shared/AppGroup.swift -target arm64-apple-ios17.0-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I build/sim/Build/Products/Debug-iphonesimulator -F build/sim/Build/Products/Debug-iphonesimulator -no-color-diagnostics -application-extension -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -module-cache-path build/sim/ModuleCache.noindex -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file build/sim/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/runner/work/nox-ios/nox-ios -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/nox-ios/nox-ios -Xcc -ivfsstatcache -Xcc build/sim/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/swift-overrides.hmap -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-generated-files.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-own-target-headers.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-all-target-headers.hmap -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/NoxTunnel-project-headers.hmap -Xcc -Ibuild/sim/Build/Products/Debug-iphonesimulator/include -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources-normal/arm64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources/arm64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/DerivedSources -Xcc -DDEBUG\=1 -module-name NoxTunnel -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -emit-module-doc-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.swiftdoc -emit-module-source-info-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.swiftsourceinfo -emit-objc-header-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel-Swift.h -serialize-diagnostics-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel-master-emit-module.dia -emit-dependencies-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel-master-emit-module.d -o build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.swiftmodule -emit-abi-descriptor-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/NoxTunnel.build/Objects-normal/arm64/NoxTunnel.abi.json
+SwiftCompile normal arm64 Compiling\ PacketTunnelProvider.swift NoxTunnel/PacketTunnelProvider.swift (in target 'NoxTunnel' from project 'Nox')
+SwiftCompile normal arm64 NoxTunnel/PacketTunnelProvider.swift (in target 'NoxTunnel' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Nox/Core/RGB.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Compiling\ AppGroup.swift Shared/AppGroup.swift (in target 'NoxTunnel' from project 'Nox')
+
+SwiftCompile normal arm64 Shared/AppGroup.swift (in target 'NoxTunnel' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Compiling\ ConnectionManager.swift,\ TunnelEngine.swift,\ AppearanceView.swift,\ SettingsView.swift,\ ConfigFiles.swift,\ SubscriptionLoader.swift,\ RoutesView.swift,\ AppSettings.swift,\ StatsStore.swift Nox/Core/ConnectionManager.swift Nox/Core/TunnelEngine.swift Nox/Features/Appearance/AppearanceView.swift Nox/Features/Settings/SettingsView.swift Nox/Core/ConfigFiles.swift Nox/Core/SubscriptionLoader.swift Nox/Features/Settings/RoutesView.swift Nox/Core/AppSettings.swift Nox/Core/StatsStore.swift (in target 'Nox' from project 'Nox')
-
-SwiftCompile normal arm64 Nox/Core/ConnectionManager.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Compiling\ PlatformInterface.swift NoxTunnel/PlatformInterface.swift (in target 'NoxTunnel' from project 'Nox')
+SwiftCompile normal arm64 NoxTunnel/PlatformInterface.swift (in target 'NoxTunnel' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
 
-SwiftCompile normal arm64 Nox/Core/TunnelEngine.swift (in target 'Nox' from project 'Nox')
+SwiftCompile normal arm64 Compiling\ RunBlocking.swift NoxTunnel/RunBlocking.swift (in target 'NoxTunnel' from project 'Nox')
+
+SwiftCompile normal arm64 NoxTunnel/RunBlocking.swift (in target 'NoxTunnel' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     
-
-SwiftCompile normal arm64 Nox/Features/Appearance/AppearanceView.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Features/Settings/SettingsView.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/ConfigFiles.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/SubscriptionLoader.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Features/Settings/RoutesView.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/AppSettings.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftCompile normal arm64 Nox/Core/StatsStore.swift (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    
-
-SwiftDriverJobDiscovery normal x86_64 Emitting module for Nox (in target 'Nox' from project 'Nox')
-
-SwiftDriver\ Compilation\ Requirements Nox normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Nox -Onone -enforce-exclusivity\=checked @build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64/Nox.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target x86_64-apple-ios17.0-simulator -g -module-cache-path build/sim/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path build/sim/Index.noindex/DataStore -swift-version 5 -I build/sim/Build/Products/Debug-iphonesimulator -F build/sim/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64 -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc build/sim/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64/Nox-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64/Nox.swiftmodule -validate-clang-modules-once -clang-build-session-file build/sim/ModuleCache.noindex/Session.modulevalidation -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64/Nox_const_extract_protocols.json -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Nox-generated-files.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Nox-own-target-headers.hmap -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Nox-all-target-headers.hmap -Xcc -iquote -Xcc build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Nox-project-headers.hmap -Xcc -Ibuild/sim/Build/Products/Debug-iphonesimulator/include -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources-normal/x86_64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/x86_64 -Xcc -Ibuild/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/Objects-normal/x86_64/Nox-Swift.h -working-directory /Users/runner/work/nox-ios/nox-ios -experimental-emit-module-separately -disable-cmo
 
 ** BUILD FAILED **
 
 
 The following build commands failed:
-	SwiftCompile normal arm64 Compiling\ Route.swift,\ ShareLinkParser.swift,\ SettingsIcon.swift,\ LogsView.swift,\ ServerStore.swift,\ NoxBackground.swift,\ LanguageView.swift,\ RGB.swift Nox/Features/Settings/Route.swift Nox/Core/ShareLinkParser.swift Nox/Design/SettingsIcon.swift Nox/Features/Settings/LogsView.swift Nox/Core/ServerStore.swift Nox/Design/NoxBackground.swift Nox/Features/Settings/LanguageView.swift Nox/Core/RGB.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal arm64 Nox/Core/ServerStore.swift (in target 'Nox' from project 'Nox')
+	EmitSwiftModule normal arm64 (in target 'NoxTunnel' from project 'Nox')
+	SwiftEmitModule normal arm64 Emitting\ module\ for\ NoxTunnel (in target 'NoxTunnel' from project 'Nox')
 	Building project Nox with scheme Nox and configuration Debug
 (3 failures)

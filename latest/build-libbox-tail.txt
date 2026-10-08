@@ -1,0 +1,80 @@
+github.com/sagernet/tailscale/net/portmapper
+github.com/sagernet/tailscale/internal/client/tailscale
+github.com/sagernet/tailscale/net/portmapper
+github.com/sagernet/tailscale/feature/oauthkey
+github.com/sagernet/tailscale/feature/condregister/oauthkey
+golang.org/x/net/http/httpproxy
+golang.org/x/net/http/httpproxy
+github.com/sagernet/tailscale/net/tshttpproxy
+github.com/sagernet/tailscale/net/tshttpproxy
+github.com/sagernet/tailscale/feature/useproxy
+github.com/sagernet/tailscale/feature/useproxy
+github.com/sagernet/tailscale/feature/condregister/useproxy
+github.com/sagernet/tailscale/feature/condregister/useproxy
+github.com/sagernet/tailscale/util/def
+github.com/sagernet/tailscale/util/def
+github.com/sagernet/tailscale/util/syspolicy/internal/loggerx
+github.com/sagernet/tailscale/util/syspolicy/internal/loggerx
+github.com/sagernet/tailscale/net/memnet
+github.com/sagernet/tailscale/util/syspolicy/internal/metrics
+github.com/sagernet/tailscale/util/syspolicy/internal/metrics
+github.com/sagernet/tailscale/net/proxymux
+github.com/sagernet/tailscale/net/socks5
+os/signal
+github.com/sagernet/tailscale/util/syspolicy/source
+github.com/sagernet/tailscale/util/syspolicy/source
+github.com/sagernet/tailscale/util/syspolicy/rsop
+github.com/sagernet/tailscale/feature/portmapper
+github.com/sagernet/tailscale/util/syspolicy/rsop
+github.com/sagernet/tailscale/feature/condregister/portmapper
+github.com/sagernet/tailscale/wgengine
+github.com/sagernet/tailscale/wgengine
+github.com/sagernet/sing-box/include
+github.com/sagernet/sing-box/include
+github.com/sagernet/tailscale/tsd
+github.com/sagernet/tailscale/feature/netlog
+github.com/sagernet/tailscale/tsd
+github.com/sagernet/tailscale/feature/netlog
+github.com/sagernet/tailscale/feature/condregister/netlog
+github.com/sagernet/tailscale/ipn/ipnext
+github.com/sagernet/tailscale/ipn/ipnext
+github.com/sagernet/tailscale/appc
+github.com/sagernet/tailscale/appc
+github.com/sagernet/tailscale/ipn/ipnlocal
+github.com/sagernet/tailscale/ipn/ipnlocal
+github.com/sagernet/tailscale/feature/acme
+github.com/sagernet/tailscale/wgengine/netstack
+github.com/sagernet/tailscale/ipn/localapi
+github.com/sagernet/tailscale/feature/acme
+github.com/sagernet/tailscale/ipn/localapi
+github.com/sagernet/tailscale/wgengine/netstack
+github.com/sagernet/tailscale/tsnet
+github.com/sagernet/tailscale/tsnet
+github.com/sagernet/sing-box/protocol/tailscale/tailssh
+github.com/sagernet/sing-box/protocol/tailscale/tailssh
+github.com/sagernet/sing-box/experimental/libbox
+github.com/sagernet/sing-box/experimental/libbox
+github.com/sagernet/sing-box/build/ios-arm64/Libbox
+github.com/sagernet/sing-box/build/iossimulator-arm64/Libbox
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Versions/A/Headers/Libbox.objc.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Versions/A/Headers/Universe.objc.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Versions/A/Headers/ref.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Versions/A/Headers/Libbox.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Resources/Info.plist
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/ios/iphoneos/Libbox.framework/Versions/A/Modules/module.modulemap
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Versions/A/Headers/Libbox.objc.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Versions/A/Headers/Universe.objc.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Versions/A/Headers/ref.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Versions/A/Headers/Libbox.h
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Resources/Info.plist
+write /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/gomobile-work-1703003051/iossimulator/iphonesimulator/Libbox.framework/Versions/A/Modules/module.modulemap
+xcframework successfully written out to: build/libbox/Libbox.xcframework
+Libbox 1.14.2 → Frameworks/Libbox.xcframework
+Frameworks/Libbox.xcframework
+Frameworks/Libbox.xcframework/Info.plist
+Frameworks/Libbox.xcframework/ios-arm64
+Frameworks/Libbox.xcframework/ios-arm64-simulator
+Frameworks/Libbox.xcframework/ios-arm64-simulator/Libbox.framework
+Frameworks/Libbox.xcframework/ios-arm64/Libbox.framework
+ 75M	Frameworks/Libbox.xcframework/ios-arm64-simulator/
+ 75M	Frameworks/Libbox.xcframework/ios-arm64/

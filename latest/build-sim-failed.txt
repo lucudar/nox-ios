@@ -1,5 +1,5 @@
 The following build commands failed:
-	SwiftCompile normal arm64 Compiling\ Route.swift,\ ShareLinkParser.swift,\ SettingsIcon.swift,\ LogsView.swift,\ ServerStore.swift,\ NoxBackground.swift,\ LanguageView.swift,\ RGB.swift Nox/Features/Settings/Route.swift Nox/Core/ShareLinkParser.swift Nox/Design/SettingsIcon.swift Nox/Features/Settings/LogsView.swift Nox/Core/ServerStore.swift Nox/Design/NoxBackground.swift Nox/Features/Settings/LanguageView.swift Nox/Core/RGB.swift (in target 'Nox' from project 'Nox')
-	SwiftCompile normal arm64 Nox/Core/ServerStore.swift (in target 'Nox' from project 'Nox')
+	EmitSwiftModule normal arm64 (in target 'NoxTunnel' from project 'Nox')
+	SwiftEmitModule normal arm64 Emitting\ module\ for\ NoxTunnel (in target 'NoxTunnel' from project 'Nox')
 	Building project Nox with scheme Nox and configuration Debug
 (3 failures)

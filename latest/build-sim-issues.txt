@@ -1,2 +1,5 @@
 ** BUILD FAILED **
-Nox/Core/ServerStore.swift:42:22: error: cannot find 'DemoData' in scope
+NoxTunnel/PlatformInterface.swift:148:88: error: 'NWPath' is ambiguous for type lookup in this context
+NoxTunnel/PlatformInterface.swift:161:42: error: 'NWPath' is ambiguous for type lookup in this context
+NoxTunnel/PlatformInterface.swift:228:10: error: 'usePlatformAutoDetectInterfaceControl()' has been renamed to 'usePlatformAutoDetectControl()'
+NoxTunnel/PlatformInterface.swift:229:10: error: 'autoDetectInterfaceControl' has been renamed to 'autoDetectControl(_:)'
