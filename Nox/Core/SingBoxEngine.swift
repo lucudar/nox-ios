@@ -37,10 +37,16 @@ final class SingBoxEngine: TunnelEngine {
     }
 
     func start(_ server: Server, options: TunnelOptions) async throws {
+        await OpenFluxKeys.prepare(server)
         try writeConfig(server, options)
         let manager = try await prepare(options, onDemand: options.autoConnect)
         AppGroup.clearError()
         AppGroup.truncateLog()
+        if server.proto == .openflux {
+            AppGroup.truncateLog(AppGroup.openFluxLogURL)
+        } else {
+            try? FileManager.default.removeItem(at: AppGroup.openFluxLogURL)
+        }
         do {
             try manager.connection.startVPNTunnel()
         } catch {
@@ -71,6 +77,7 @@ final class SingBoxEngine: TunnelEngine {
     }
 
     func update(_ server: Server, options: TunnelOptions) async throws {
+        await OpenFluxKeys.prepare(server)
         try writeConfig(server, options)
         guard let session = manager?.connection as? NETunnelProviderSession,
               session.status == .connected || session.status == .reasserting || session.status == .connecting else { return }
@@ -202,7 +209,15 @@ final class SingBoxEngine: TunnelEngine {
         environment.bundledRuleSets = Self.installRuleSets()
         environment.clashPort = Self.clashPort
         environment.clashSecret = secret
+        environment.openFluxPassword = secret
+        environment.openFluxLogPath = AppGroup.openFluxLogURL.path
         let json = try SingBoxConfig.json(server: server, options: options, environment: environment)
+        // OpenFlux servers: the extension starts the OpenFlux core from openflux.json first.
+        if let flux = try SingBoxConfig.openFluxJSON(server: server, options: options, environment: environment) {
+            try Data(flux.utf8).write(to: AppGroup.openFluxURL, options: .atomic)
+        } else {
+            try? FileManager.default.removeItem(at: AppGroup.openFluxURL)
+        }
         try Data(json.utf8).write(to: AppGroup.configURL, options: .atomic)
     }
 

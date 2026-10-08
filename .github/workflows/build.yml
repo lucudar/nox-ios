@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: Frameworks/Libbox.xcframework
-          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh') }}
+          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh', 'core/noxflux/*.go') }}
 
       - name: Set up Go
         if: steps.libbox-cache.outputs.cache-hit != 'true'
@@ -66,6 +66,7 @@ jobs:
         if: steps.libbox-cache.outputs.cache-hit != 'true'
         env:
           PATCH_GO: "1"
+          NOXFLUX_TEST: "1"
         run: |
           set -o pipefail
           bash tools/build_libbox.sh "$SING_BOX_VERSION" 2>&1 | tee build-libbox.log
@@ -75,7 +76,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: Frameworks/Libbox.xcframework
-          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh') }}
+          key: libbox-${{ env.SING_BOX_VERSION }}-go${{ env.GO_VERSION }}-${{ hashFiles('tools/build_libbox.sh', 'core/noxflux/*.go') }}
 
       - name: Bundle rule-sets
         run: bash tools/fetch_rulesets.sh
@@ -152,7 +153,8 @@ jobs:
           TAG="v${VERSION}-${GITHUB_RUN_NUMBER}"
           echo "$TAG" > "$RUNNER_TEMP/tag.txt"
           {
-            echo "**Nox ${VERSION}**, сборка ${GITHUB_RUN_NUMBER} · $(xcodebuild -version | head -1) · sing-box ${SING_BOX_VERSION} · коммит ${SHORT}"
+            OPENFLUX=$(grep -m1 -o 'OPENFLUX_REF:-[0-9a-f]*' tools/build_libbox.sh | cut -d- -f2 | cut -c1-7)
+            echo "**Nox ${VERSION}**, сборка ${GITHUB_RUN_NUMBER} · $(xcodebuild -version | head -1) · sing-box ${SING_BOX_VERSION} · OpenFlux ${OPENFLUX} · коммит ${SHORT}"
             echo
             cat .github/release-notes.md
           } > "$RUNNER_TEMP/notes.md"

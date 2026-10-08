@@ -1,8 +1,9 @@
 import Foundation
 
 /// Files shared by the app and the Packet Tunnel extension (App Group container):
-/// the app writes `config.json` and starts the tunnel; the extension runs sing-box with it,
-/// writes the core log to `box.log` and the last start error to `error.txt`.
+/// the app writes `config.json` (+ `openflux.json` for OpenFlux servers) and starts the tunnel;
+/// the extension runs sing-box with it, writes the core log to `box.log` (OpenFlux: `openflux.log`)
+/// and the last start error to `error.txt`.
 enum AppGroup {
     /// `NoxAppGroup` in Info.plist = group.$(NOX_BUNDLE_ID): change NOX_BUNDLE_ID in the project to
     /// re-sign Nox with your own team, the bundle IDs and the group follow it.
@@ -23,6 +24,9 @@ enum AppGroup {
 
     static var configURL: URL { container.appendingPathComponent("config.json") }
     static var logURL: URL { container.appendingPathComponent("box.log") }
+    /// OpenFlux core config: present only while an OpenFlux server is in use.
+    static var openFluxURL: URL { container.appendingPathComponent("openflux.json") }
+    static var openFluxLogURL: URL { container.appendingPathComponent("openflux.log") }
     static var errorURL: URL { container.appendingPathComponent("error.txt") }
     static var cacheURL: URL { container.appendingPathComponent("cache.db") }
     static var ruleSetsURL: URL { directory(container.appendingPathComponent("RuleSets", isDirectory: true)) }
@@ -53,9 +57,9 @@ enum AppGroup {
 
     // MARK: Core log
 
-    /// Last `maxBytes` of box.log (whole lines only).
-    static func logTail(maxBytes: Int = 96 * 1024) -> String {
-        guard let handle = try? FileHandle(forReadingFrom: logURL) else { return "" }
+    /// Last `maxBytes` of box.log or another log (whole lines only).
+    static func logTail(_ file: URL? = nil, maxBytes: Int = 96 * 1024) -> String {
+        guard let handle = try? FileHandle(forReadingFrom: file ?? logURL) else { return "" }
         defer { try? handle.close() }
         let size = (try? handle.seekToEnd()) ?? 0
         let start = size > UInt64(maxBytes) ? size - UInt64(maxBytes) : 0
@@ -66,7 +70,7 @@ enum AppGroup {
         return text
     }
 
-    static func truncateLog() {
-        try? Data().write(to: logURL)
+    static func truncateLog(_ file: URL? = nil) {
+        try? Data().write(to: file ?? logURL)
     }
 }

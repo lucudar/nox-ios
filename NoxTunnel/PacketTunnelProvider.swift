@@ -3,8 +3,9 @@ import Libbox
 import NetworkExtension
 
 /// The Packet Tunnel: runs sing-box (libbox) with the config the app wrote to the App Group
-/// container (`AppGroup.configURL`). The app hot-reloads it with `AppGroup.reloadMessage`
-/// when the server or routing changes, so the tunnel never drops.
+/// container (`AppGroup.configURL`), plus the OpenFlux client for OpenFlux servers
+/// (`OpenFluxCore`). The app hot-reloads it with `AppGroup.reloadMessage` when the server or
+/// routing changes, so the tunnel never drops.
 final class PacketTunnelProvider: NEPacketTunnelProvider {
     private var commandServer: LibboxCommandServer?
     private lazy var platform = PlatformInterface(self)
@@ -14,6 +15,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         do {
             let config = try Self.readConfig()
             let server = try makeCommandServer()
+            try OpenFluxCore.apply(waitMillis: 25_000)
             try server.startOrReloadService(config, options: LibboxOverrideOptions())
         } catch {
             let message = Self.describe(error)
@@ -24,6 +26,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func stopTunnel(with reason: NEProviderStopReason) async {
+        defer { OpenFluxCore.stop() }
         guard let server = commandServer else { return }
         try? server.closeService()
         platform.reset()
@@ -62,7 +65,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         reasserting = true
         defer { reasserting = false }
         AppGroup.clearError()
-        try server.startOrReloadService(try Self.readConfig(), options: LibboxOverrideOptions())
+        let config = try Self.readConfig()
+        try OpenFluxCore.apply(waitMillis: 15_000)
+        try server.startOrReloadService(config, options: LibboxOverrideOptions())
     }
 
     private func makeCommandServer() throws -> LibboxCommandServer {
@@ -88,6 +93,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     private func shutdown() {
+        OpenFluxCore.stop()
         guard let server = commandServer else { return }
         try? server.closeService()
         platform.reset()

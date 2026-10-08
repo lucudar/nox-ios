@@ -70,13 +70,14 @@ enum ProxyProtocol: String, Codable, CaseIterable, Identifiable, Sendable {
         case .wireguard, .amneziawg: return ("Приватный ключ", "Private key")
         case .ssh: return ("Пользователь:пароль", "User:password")
         case .openvpn, .ikev2: return ("Логин:пароль", "Login:password")
-        case .openflux, .custom: return ("Ключ / токен", "Key / token")
+        case .openflux: return ("Ключ шифрования", "Encryption key")
+        case .custom: return ("Ключ / токен", "Key / token")
         default: return ("Пароль", "Password")
         }
     }
 
     /// Protocols that are configured with a whole config blob rather than a link.
-    var usesRawConfig: Bool { self == .openvpn || self == .openflux || self == .custom }
+    var usesRawConfig: Bool { self == .openvpn || self == .custom }
 }
 
 // MARK: - Server

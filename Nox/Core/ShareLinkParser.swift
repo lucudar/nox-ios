@@ -67,6 +67,9 @@ enum ShareLinkParser {
 
         guard let u = RawURL(link) else { return nil }
         let proto = schemes[scheme] ?? .custom
+        if proto == .openflux {
+            return OpenFluxProfile(link: link)?.server(name: u.fragment ?? "")
+        }
         var s = Server()
         s.proto = proto
         s.host = u.host
@@ -82,7 +85,7 @@ enum ShareLinkParser {
             break
         }
         finish(&s, hint: u.fragment ?? "")
-        if s.host.isEmpty && proto != .openflux && proto != .custom { return nil }
+        if s.host.isEmpty && proto != .custom { return nil }
         return s
     }
 

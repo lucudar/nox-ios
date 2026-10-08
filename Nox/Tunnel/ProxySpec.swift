@@ -81,6 +81,8 @@ enum ParsedProxy {
     case spec(ProxySpec)
     /// A sing-box outbound (or endpoint) imported from a sing-box config: used almost as is.
     case singBox([String: Any])
+    /// Runs in the OpenFlux core; sing-box reaches it through a local SOCKS5 port.
+    case openFlux(OpenFluxProfile)
 }
 
 extension ProxySpec {
@@ -90,7 +92,12 @@ extension ProxySpec {
         switch server.proto {
         case .amneziawg: throw TunnelConfigError.unsupported("AmneziaWG")
         case .ikev2: throw TunnelConfigError.unsupported("IKEv2")
-        case .openflux: throw TunnelConfigError.unsupported("OpenFlux")
+        case .openflux:
+            guard let profile = OpenFluxProfile(link: server.link) else {
+                throw TunnelConfigError.invalid(L10n.t("ссылка OpenFlux", "OpenFlux link"))
+            }
+            if let problem = profile.problem { throw TunnelConfigError.invalid(problem) }
+            return .openFlux(profile)
         case .custom:
             throw TunnelConfigError.unsupported(server.variant.isEmpty ? L10n.t("Свой протокол", "A custom protocol") : server.variant)
         default:

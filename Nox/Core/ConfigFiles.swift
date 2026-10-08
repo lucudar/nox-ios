@@ -35,6 +35,10 @@ enum ConfigFiles {
     private static func outbound(_ o: [String: Any]) -> Server? {
         let str = ShareLinkParser.str
         let int = ShareLinkParser.int
+        // OpenFlux profile ({"transport": "yandex", "urls": […]}); sing-box's transport is an object.
+        if o["transport"] is String, let profile = OpenFluxProfile(json: o) {
+            return profile.server(name: str(o["name"] ?? o["tag"]))
+        }
         var s = Server()
         if let type = o["type"] as? String {
             // sing-box: type / server / server_port / tls / transport

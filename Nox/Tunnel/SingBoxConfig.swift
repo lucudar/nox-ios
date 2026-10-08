@@ -17,6 +17,12 @@ struct TunnelEnvironment {
     /// false → a local mixed (SOCKS/HTTP) inbound instead of TUN, for tests.
     var useTun = true
     var mixedPort = 2080
+    /// Local SOCKS5 port of the OpenFlux core and its password (RFC 1929: any app on the
+    /// device can reach 127.0.0.1, so it is never an open proxy).
+    var openFluxPort = 19091
+    var openFluxPassword = "nox-openflux"
+    /// OpenFlux core log. nil → none.
+    var openFluxLogPath: String?
 }
 
 /// Builds the complete sing-box (1.14) config for one server + the user's routing options.
@@ -34,10 +40,12 @@ enum SingBoxConfig {
     static let ipCheckURL = "https://speed.cloudflare.com/cdn-cgi/trace"
 
     static func build(server: Server, options: TunnelOptions, environment env: TunnelEnvironment) throws -> [String: Any] {
-        let proxy = try SingBoxOutbound.make(server)
+        let proxy = try SingBoxOutbound.make(server, environment: env)
         var config: [String: Any] = [:]
 
-        var log: [String: Any] = ["level": options.verboseLogs ? "info" : "warn", "timestamp": true, "disable_color": true]
+        // No colours: sing-box drops them itself when writing to a file ("disable_color" isn't
+        // a config field — the decoder rejects it).
+        var log: [String: Any] = ["level": options.verboseLogs ? "info" : "warn", "timestamp": true]
         if let path = env.logPath { log["output"] = path }
         config["log"] = log
 
@@ -47,7 +55,7 @@ enum SingBoxConfig {
         rules.addPreset(options.routing)
 
         config["dns"] = [
-            "servers": [remoteDNS(options, proxyType: proxy.type), ["type": "local", "tag": "dns-local"]],
+            "servers": [remoteDNS(options, udp: proxy.supportsUDP), ["type": "local", "tag": "dns-local"]],
             "rules": rules.dns,
             "final": rules.dnsFinal,
             "strategy": "ipv4_only",
@@ -77,8 +85,11 @@ enum SingBoxConfig {
         var routeRules: [[String: Any]] = [
             ["action": "sniff"],
             ["protocol": "dns", "action": "hijack-dns"],
-            ["domain": [ipCheckHost], "outbound": SingBoxOutbound.tag],
         ]
+        // A TCP-only proxy: refuse QUIC at once, so browsers and apps fall back to TCP
+        // instead of waiting for a timeout.
+        if !proxy.supportsUDP { routeRules.append(["network": ["udp"], "port": [443], "action": "reject"]) }
+        routeRules.append(["domain": [ipCheckHost], "outbound": SingBoxOutbound.tag])
         routeRules += rules.route
         var ruleSets: [[String: Any]] = []
         for source in rules.sources {
@@ -115,11 +126,23 @@ enum SingBoxConfig {
         return String(data: data, encoding: .utf8) ?? "{}"
     }
 
+    /// openflux.json for the OpenFlux core of an OpenFlux server, nil for every other server.
+    static func openFluxJSON(server: Server, options: TunnelOptions, environment env: TunnelEnvironment) throws -> String? {
+        guard server.proto == .openflux, case .openFlux(let profile) = try ProxySpec.parse(server) else { return nil }
+        // Domain targets are resolved through the tunnel too, over TCP: an IPv4 resolver is enough.
+        var dns = options.dnsPreset == .custom ? options.customDNS.trimmingCharacters(in: .whitespaces) : options.dnsPreset.address
+        if !SingBoxOutbound.isIP(dns) || dns.contains(":") { dns = "1.1.1.1" }
+        let object = profile.coreConfig(port: env.openFluxPort, password: env.openFluxPassword, dns: dns,
+                                        logPath: env.openFluxLogPath, verbose: options.verboseLogs)
+        let data = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys, .withoutEscapingSlashes])
+        return String(decoding: data, as: UTF8.self)
+    }
+
     // MARK: DNS servers
 
     /// The resolver from Settings → DNS, always through the proxy. Presets use IP addresses with
     /// the TLS name set, so no bootstrap lookup through the (possibly filtered) ISP resolver.
-    static func remoteDNS(_ o: TunnelOptions, proxyType: String) -> [String: Any] {
+    static func remoteDNS(_ o: TunnelOptions, udp: Bool) -> [String: Any] {
         var server: [String: Any]
         if o.dnsPreset == .custom {
             server = customDNS(o.customDNS, transport: o.dnsTransport)
@@ -135,8 +158,10 @@ enum SingBoxConfig {
                 server = ["type": "udp", "server": ip]
             }
         }
-        // SSH can't carry UDP: plain DNS goes over TCP instead.
-        if proxyType == "ssh", server["type"] as? String == "udp" { server["type"] = "tcp" }
+        // SSH and OpenFlux can't carry UDP: plain DNS goes over TCP, DoQ / DoH3 over TLS / DoH.
+        if !udp, let type = server["type"] as? String, let tcp = ["udp": "tcp", "quic": "tls", "h3": "https"][type] {
+            server["type"] = tcp
+        }
         server["tag"] = "dns-remote"
         server["detour"] = SingBoxOutbound.tag
         return server

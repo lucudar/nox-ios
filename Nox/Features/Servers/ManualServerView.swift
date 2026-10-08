@@ -29,6 +29,15 @@ struct ManualServerView: View {
                 if draft.proto == .amneziawg { amneziaSection }
                 countrySection
 
+                // Why Save is still disabled, once something has been typed.
+                if draft.proto == .openflux, draft.fluxHasInput, let problem = draft.fluxProfile.problem {
+                    Section {
+                        Label(problem.prefix(1).uppercased() + problem.dropFirst(), systemImage: "info.circle")
+                            .foregroundStyle(Ink.secondary)
+                    }
+                    .listRowBackground(settings.elevatedColor)
+                }
+
                 if let error {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
@@ -65,8 +74,10 @@ struct ManualServerView: View {
     private var serverSection: some View {
         Section {
             InputRow(title: settings.t("Название", "Name"), text: $draft.name, prompt: settings.t("Необязательно", "Optional"))
-            InputRow(title: settings.t("Адрес", "Address"), text: $draft.host, prompt: "example.com", keyboard: .URL)
-            InputRow(title: settings.t("Порт", "Port"), text: $draft.port, prompt: String(draft.proto.defaultPort), keyboard: .numberPad)
+            if draft.proto != .openflux {
+                InputRow(title: settings.t("Адрес", "Address"), text: $draft.host, prompt: "example.com", keyboard: .URL)
+                InputRow(title: settings.t("Порт", "Port"), text: $draft.port, prompt: String(draft.proto.defaultPort), keyboard: .numberPad)
+            }
         } header: {
             Text(settings.t("Сервер", "Server"))
         } footer: {
@@ -90,7 +101,10 @@ struct ManualServerView: View {
         case .wireguard, .amneziawg: wireguardSection
         case .openvpn: openVPNSection
         case .ikev2, .ssh: loginSection
-        case .openflux, .custom: tokenSection
+        case .openflux:
+            openFluxSection
+            openFluxKeySection
+        case .custom: tokenSection
         }
     }
 
@@ -268,12 +282,85 @@ struct ManualServerView: View {
         .listRowBackground(settings.elevatedColor)
     }
 
+    private var openFluxSection: some View {
+        Section {
+            Picker(settings.t("Канал", "Channel"), selection: $draft.fluxTransport) {
+                ForEach(OpenFluxProfile.Transport.allCases) { t in
+                    Text(t.title).tag(t)
+                }
+            }
+            .pickerStyle(.menu)
+            if draft.fluxTransport.usesDocuments {
+                ConfigEditor(text: $draft.fluxDocuments,
+                             placeholder: draft.fluxTransport.documentPrompt
+                                 + (draft.fluxTransport.allowsSeveral ? "\n" + settings.t("по ссылке в строке", "one link per line") : ""))
+            } else {
+                InputRow(title: settings.t("Токен вашего аккаунта MAX", "Your MAX account token"), text: $draft.fluxToken, prompt: "token", mono: true)
+                InputRow(title: settings.t("ID аккаунта выходного узла", "Exit node account ID"), text: $draft.fluxUID, prompt: "123456789", keyboard: .numberPad)
+            }
+            Picker(settings.t("Кодек", "Codec"), selection: $draft.fluxCodec) {
+                ForEach(OpenFluxProfile.Codec.allCases) { c in
+                    Text(c.rawValue).tag(c)
+                }
+            }
+            .pickerStyle(.segmented)
+        } header: {
+            HStack {
+                Text("OpenFlux")
+                Spacer()
+                PasteButton(payloadType: String.self) { strings in
+                    guard let text = strings.first else { return }
+                    if !draft.pasteOpenFlux(text) { draft.fluxDocuments = text }
+                }
+                .labelStyle(.iconOnly)
+                .buttonBorderShape(.capsule)
+                .controlSize(.mini)
+            }
+        } footer: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(openFluxHint)
+                Text(draft.fluxProfile.exitCommand)
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+        }
+        .listRowBackground(settings.elevatedColor)
+    }
+
+    private var openFluxHint: String {
+        switch draft.fluxTransport {
+        case .oneme:
+            return settings.t("Нужен свой выходной узел OpenFlux, вошедший в другой аккаунт MAX: Nox звонит ему по ID.",
+                              "Needs your own OpenFlux exit node signed in to another MAX account: Nox calls it by ID.")
+        case .cupsonline:
+            return settings.t("Выходной узел сам создаёт комнаты и печатает их список — вставьте его сюда. Кодек — как на выходе:",
+                              "The exit node creates the rooms and prints their list — paste it here. The codec must match the exit:")
+        default:
+            return settings.t("Нужен свой выходной узел OpenFlux с теми же документами (в том же порядке) и кодеком:",
+                              "Needs your own OpenFlux exit node with the same documents (in the same order) and codec:")
+        }
+    }
+
+    private var openFluxKeySection: some View {
+        Section {
+            SecretRow(title: settings.t("Ключ", "Key"), text: $draft.fluxKey)
+            if !draft.fluxKey.trimmed.isEmpty {
+                InputRow(title: settings.t("Контекст ключа", "Key context"), text: $draft.fluxContext,
+                         prompt: settings.t("Автоматически", "Automatic"), mono: true)
+            }
+        } header: {
+            Text(settings.t("Шифрование", "Encryption"))
+        } footer: {
+            Text(settings.t("Необязательно. AES-256-GCM поверх канала: тот же ключ, что в --encryption-key-file выходного узла, от 16 символов. Контекст по умолчанию — строка --url выхода; меняйте, только если выход запущен иначе.",
+                            "Optional. AES-256-GCM on top of the channel: the same key as the exit node's --encryption-key-file, 16+ characters. The context defaults to the exit's --url string; change it only if the exit runs differently."))
+        }
+        .listRowBackground(settings.elevatedColor)
+    }
+
     private var tokenSection: some View {
         Section {
-            if draft.proto == .custom {
-                InputRow(title: settings.t("Схема ссылки", "Link scheme"), text: $draft.scheme, prompt: "myproto", mono: true)
-            }
-            InputRow(title: settings.t("Ключ / токен", "Key / token"), text: $draft.token, prompt: draft.proto == .custom ? settings.t("Необязательно", "Optional") : "", mono: true)
+            InputRow(title: settings.t("Схема ссылки", "Link scheme"), text: $draft.scheme, prompt: "myproto", mono: true)
+            InputRow(title: settings.t("Ключ / токен", "Key / token"), text: $draft.token, prompt: settings.t("Необязательно", "Optional"), mono: true)
             ConfigEditor(text: $draft.config, placeholder: settings.t("Конфигурация (необязательно)", "Config (optional)"))
         } header: {
             HStack {
@@ -282,11 +369,8 @@ struct ManualServerView: View {
                 pasteButton
             }
         } footer: {
-            Text(draft.proto == .custom
-                 ? settings.t("Получится ссылка вида схема://ключ@адрес:порт. Конфигурация сохраняется как есть.",
-                              "Produces a scheme://key@address:port link. The config is stored as is.")
-                 : settings.t("Ключ выдаёт сервер OpenFlux. Конфигурация сохраняется как есть.",
-                              "The key comes from the OpenFlux server. The config is stored as is."))
+            Text(settings.t("Получится ссылка вида схема://ключ@адрес:порт. Конфигурация сохраняется как есть.",
+                            "Produces a scheme://key@address:port link. The config is stored as is."))
         }
         .listRowBackground(settings.elevatedColor)
     }

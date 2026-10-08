@@ -2,7 +2,9 @@ import SwiftUI
 
 struct LogsView: View {
     private enum Source: Hashable, CaseIterable {
-        case app, core
+        case app, core, openflux
+
+        var file: URL? { self == .openflux ? AppGroup.openFluxLogURL : nil }
     }
 
     @Environment(AppSettings.self) private var settings
@@ -17,20 +19,27 @@ struct LogsView: View {
         @Bindable var settings = settings
         Screen(title: settings.t("Логи", "Logs"), trailing: { actions }) {
             VStack(alignment: .leading, spacing: 12) {
-                SlidingSegmented(options: Source.allCases, selection: $source) { option in
-                    option == .app ? settings.t("Приложение", "App") : settings.t("Ядро", "Core")
+                SlidingSegmented(options: sources, selection: $source) { option in
+                    switch option {
+                    case .app: return settings.t("Приложение", "App")
+                    case .core: return settings.t("Ядро", "Core")
+                    case .openflux: return "OpenFlux"
+                    }
                 }
                 .padding(.bottom, 8)
 
                 switch source {
                 case .app:
                     appLog
-                case .core:
+                case .core, .openflux:
                     GroupCard {
                         ToggleRow(glyph: nil, title: settings.t("Подробный лог", "Verbose log"), isOn: $settings.prefs.verboseLogs)
                     }
-                    Caption(text: settings.t("sing-box пишет предупреждения и ошибки; подробный режим добавляет каждое соединение.",
-                                             "sing-box logs warnings and errors; verbose mode adds every connection."))
+                    Caption(text: source == .core
+                            ? settings.t("sing-box пишет предупреждения и ошибки; подробный режим добавляет каждое соединение.",
+                                         "sing-box logs warnings and errors; verbose mode adds every connection.")
+                            : settings.t("Клиент OpenFlux: подключение к сервису, ответ выходного узла, переподключения; подробный режим добавляет каждое соединение.",
+                                         "The OpenFlux client: the service channel, the exit node's answer, reconnects; verbose mode adds every connection."))
                         .padding(.horizontal, 4)
                         .padding(.bottom, 8)
                     coreLog
@@ -39,9 +48,10 @@ struct LogsView: View {
         }
         .toast($toast)
         .task(id: source) {
-            guard source == .core else { return }
+            guard source != .app else { return }
+            coreLines = []
             while !Task.isCancelled {
-                coreLines = Self.lines(AppGroup.logTail())
+                coreLines = Self.lines(AppGroup.logTail(source.file))
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
         }
@@ -52,7 +62,7 @@ struct LogsView: View {
                     if source == .app {
                         connection.clearLogs()
                     } else {
-                        AppGroup.truncateLog()
+                        AppGroup.truncateLog(source.file)
                         coreLines = []
                     }
                 }
@@ -99,6 +109,12 @@ struct LogsView: View {
             Caption(text: settings.t("Новые сверху · \(coreLines.count)", "Newest first · \(coreLines.count)"))
                 .padding(.horizontal, 4)
         }
+    }
+
+    /// The OpenFlux tab appears once its client has written a log.
+    private var sources: [Source] {
+        let flux = FileManager.default.fileExists(atPath: AppGroup.openFluxLogURL.path)
+        return flux || source == .openflux ? Source.allCases : [.app, .core]
     }
 
     private var currentText: String {

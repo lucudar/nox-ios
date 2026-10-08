@@ -7,16 +7,34 @@ enum SingBoxOutbound {
         /// WireGuard / OpenVPN live in `endpoints`, everything else in `outbounds`.
         var isEndpoint: Bool
         var type: String { object["type"] as? String ?? "" }
+        /// SSH and the OpenFlux port carry TCP only: DNS goes over TCP, QUIC falls back to TCP.
+        var supportsUDP: Bool {
+            if type == "ssh" { return false }
+            if let network = object["network"] as? String { return network != "tcp" }
+            return true
+        }
     }
 
     static let tag = "proxy"
     static let endpointTypes: Set<String> = ["wireguard", "openvpn-client", "tailscale", "openconnect"]
 
-    static func make(_ server: Server) throws -> Built {
+    static func make(_ server: Server, environment env: TunnelEnvironment = TunnelEnvironment()) throws -> Built {
         switch try ProxySpec.parse(server) {
         case .spec(let spec): return try make(spec)
         case .singBox(let object): return try imported(object)
+        case .openFlux: return openFlux(env)
         }
+    }
+
+    /// The OpenFlux core's SOCKS5 port in the same extension. Bound to 127.0.0.1, which also
+    /// keeps sing-box from binding it to the Wi-Fi / cellular interface (auto_detect_interface).
+    static func openFlux(_ env: TunnelEnvironment) -> Built {
+        Built(object: [
+            "type": "socks", "tag": tag, "version": "5",
+            "server": "127.0.0.1", "server_port": env.openFluxPort,
+            "username": OpenFluxProfile.socksUser, "password": env.openFluxPassword,
+            "network": "tcp", "inet4_bind_address": "127.0.0.1",
+        ], isEndpoint: false)
     }
 
     // MARK: From a spec

@@ -75,6 +75,51 @@ struct ManualDraft: Equatable {
     var scheme = ""
     var token = ""
 
+    // OpenFlux
+    var fluxTransport: OpenFluxProfile.Transport = .yandex
+    /// Document links as typed: one per line (or comma-separated).
+    var fluxDocuments = ""
+    var fluxToken = ""
+    var fluxUID = ""
+    var fluxCodec: OpenFluxProfile.Codec = .batched
+    var fluxKey = ""
+    var fluxContext = ""
+
+    var fluxProfile: OpenFluxProfile {
+        var p = OpenFluxProfile(transport: fluxTransport)
+        p.documents = OpenFluxProfile.split(fluxDocuments)
+        p.maxToken = fluxToken.trimmed
+        p.maxUID = fluxUID.trimmed
+        p.codec = fluxCodec
+        p.key = fluxKey.trimmed
+        p.keyContext = fluxContext.trimmed
+        return p
+    }
+
+    var fluxHasInput: Bool {
+        !fluxDocuments.trimmed.isEmpty || !fluxToken.trimmed.isEmpty || !fluxUID.trimmed.isEmpty || !fluxKey.isEmpty
+    }
+
+    /// Fills the OpenFlux fields from pasted text (link, JSON, command line, document links).
+    /// false → nothing recognised.
+    mutating func pasteOpenFlux(_ raw: String) -> Bool {
+        let text = raw.trimmed
+        guard let p = OpenFluxProfile(text: text) else { return false }
+        fluxTransport = p.transport
+        fluxDocuments = p.documents.joined(separator: "\n")
+        fluxToken = p.maxToken
+        fluxUID = p.maxUID
+        fluxCodec = p.codec
+        if !p.key.isEmpty { fluxKey = p.key }
+        if !p.keyContext.isEmpty { fluxContext = p.keyContext }
+        if name.trimmed.isEmpty, let r = text.range(of: "://"),
+           ShareLinkParser.schemes[text[..<r.lowerBound].lowercased()] == .openflux,
+           let fragment = RawURL(text)?.fragment {
+            name = ShareLinkParser.cleanName(fragment)
+        }
+        return true
+    }
+
     // MARK: Validation
 
     var portNumber: Int? {
@@ -85,7 +130,7 @@ struct ManualDraft: Equatable {
     /// OpenVPN configs usually carry their own `remote host port` line.
     var configHasRemote: Bool { Self.hasRemoteLine(config) }
 
-    var needsHost: Bool { !(proto == .openvpn && configHasRemote) }
+    var needsHost: Bool { !(proto == .openvpn && configHasRemote) && proto != .openflux }
 
     var schemeIsValid: Bool {
         let s = scheme.trimmed.lowercased()
@@ -117,7 +162,7 @@ struct ManualDraft: Equatable {
         case .ikev2, .ssh:
             return !user.trimmed.isEmpty
         case .openflux:
-            return !token.trimmed.isEmpty || !config.trimmed.isEmpty
+            return fluxProfile.problem == nil
         case .custom:
             return schemeIsValid
         }
@@ -209,8 +254,11 @@ struct ManualDraft: Equatable {
             let secret = password.isEmpty ? "" : ":" + password.urlEncoded
             return "\(proto.linkScheme)://\(user.trimmed.urlEncoded)\(secret)@\(hostPort)\(fragment)"
 
-        case .openflux, .custom:
-            let scheme = proto == .openflux ? "openflux" : self.scheme.trimmed.lowercased()
+        case .openflux:
+            return fluxProfile.link(name: name)
+
+        case .custom:
+            let scheme = self.scheme.trimmed.lowercased()
             let token = self.token.trimmed
             var link = "\(scheme)://" + (token.isEmpty ? "" : token.urlEncoded + "@") + hostPort
             let raw = config.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -61,9 +61,10 @@ final class ServerStore {
     var selected: Server? { server(selectedID) ?? allServers.first }
 
     /// Fastest server by the last ping. Home / LAN servers are skipped: they only work at home.
+    /// So is OpenFlux: its ping measures the Yandex / Mail.ru host, not the exit node.
     var best: Server? {
         allServers
-            .filter { $0.lastPing != nil && !$0.pingFailed && $0.badge != .home && !Countries.isPrivateHost($0.host) }
+            .filter { $0.lastPing != nil && !$0.pingFailed && $0.badge != .home && $0.proto != .openflux && !Countries.isPrivateHost($0.host) }
             .min { ($0.lastPing ?? .max) < ($1.lastPing ?? .max) }
     }
 
