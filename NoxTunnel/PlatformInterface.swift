@@ -145,7 +145,7 @@ final class PlatformInterface: NSObject, LibboxPlatformInterfaceProtocol, Libbox
         lastPath = nil
     }
 
-    private func update(_ listener: any LibboxInterfaceUpdateListenerProtocol, _ path: NWPath) {
+    private func update(_ listener: any LibboxInterfaceUpdateListenerProtocol, _ path: Network.NWPath) {
         let description = Self.describe(path)
         listener.updateNetworkPath(description)
         guard description != lastPath else { return }
@@ -158,7 +158,7 @@ final class PlatformInterface: NSObject, LibboxPlatformInterfaceProtocol, Libbox
                                         isExpensive: path.isExpensive, isConstrained: path.isConstrained)
     }
 
-    private static func describe(_ path: NWPath) -> String {
+    private static func describe(_ path: Network.NWPath) -> String {
         var parts: [String] = []
         switch path.status {
         case .satisfied: parts.append("satisfied")
@@ -225,8 +225,8 @@ final class PlatformInterface: NSObject, LibboxPlatformInterfaceProtocol, Libbox
 
     // MARK: Not available on iOS
 
-    func usePlatformAutoDetectInterfaceControl() -> Bool { false }
-    func autoDetectInterfaceControl(_ fd: Int32) throws {}
+    func usePlatformAutoDetectControl() -> Bool { false }
+    func autoDetectControl(_ fd: Int32) throws {}
     func useProcFS() -> Bool { false }
     func usePlatformBridge() -> Bool { false }
     func usePlatformShell() -> Bool { false }
