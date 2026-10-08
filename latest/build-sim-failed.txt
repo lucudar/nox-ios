@@ -1,5 +1,0 @@
-The following build commands failed:
-	EmitSwiftModule normal arm64 (in target 'NoxTunnel' from project 'Nox')
-	SwiftEmitModule normal arm64 Emitting\ module\ for\ NoxTunnel (in target 'NoxTunnel' from project 'Nox')
-	Building project Nox with scheme Nox and configuration Debug
-(3 failures)

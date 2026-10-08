@@ -1,5 +1,9 @@
-** BUILD FAILED **
-NoxTunnel/PlatformInterface.swift:148:88: error: 'NWPath' is ambiguous for type lookup in this context
-NoxTunnel/PlatformInterface.swift:161:42: error: 'NWPath' is ambiguous for type lookup in this context
-NoxTunnel/PlatformInterface.swift:228:10: error: 'usePlatformAutoDetectInterfaceControl()' has been renamed to 'usePlatformAutoDetectControl()'
-NoxTunnel/PlatformInterface.swift:229:10: error: 'autoDetectInterfaceControl' has been renamed to 'autoDetectControl(_:)'
+** BUILD SUCCEEDED **
+#import "Headers/Libbox.objc.h"
+2026-10-08 05:03:08.973 appintentsmetadataprocessor[3154:14434] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-08 05:03:10.167 appintentsmetadataprocessor[3174:14528] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+build/sim/Build/Products/Debug-iphonesimulator/Libbox.framework/Headers/Libbox.objc.h:1049:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
+build/sim/Build/Products/Debug-iphonesimulator/Libbox.framework/Headers/Libbox.objc.h:1178:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
+build/sim/Build/Products/Debug-iphonesimulator/Libbox.framework/Headers/Libbox.objc.h:1451:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
+build/sim/Build/Products/Debug-iphonesimulator/Libbox.framework/Headers/Libbox.objc.h:1609:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
+build/sim/Build/Products/Debug-iphonesimulator/Libbox.framework/Headers/Libbox.objc.h:866:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'

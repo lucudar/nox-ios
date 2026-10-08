@@ -1,10 +1,37 @@
-run: https://github.com/lucudar/nox-ios/actions/runs/37729772838
-run_number: 8
-sha: 2abd513d539cafe12b01c9c257210808b2701ff9
+run: https://github.com/lucudar/nox-ios/actions/runs/37730400941
+run_number: 9
+sha: 94e69e3994652551da8b64351221a290da9686e1
 xcode: Xcode 16.4 Build version 16F6 
-libbox: cache-hit= build=success
-simulator: failure
-device: skipped
-package: skipped
-release: skipped 
+libbox: cache-hit=true build=skipped
+simulator: success
+device: success
+package: success
+release: success v0.6-9
 
+bundle: com.example.nox
+ 66M	dist/Payload/Nox.app
+ 61M	dist/Payload/Nox.app/PlugIns/NoxTunnel.appex
+total 124456
+drwxr-xr-x  3 runner  staff        96 Oct  8 05:03 _CodeSignature
+drwxr-xr-x  5 runner  staff       160 Oct  8 05:03 .
+drwxr-xr-x  3 runner  staff        96 Oct  8 05:03 ..
+-rw-r--r--  1 runner  staff       992 Oct  8 05:03 Info.plist
+-rwxr-xr-x  1 runner  staff  63715360 Oct  8 05:03 NoxTunnel
+rule-sets: 9
+  "CFBundleIdentifier" => "com.example.nox.tunnel"
+  "CFBundleShortVersionString" => "0.6"
+  "CFBundleVersion" => "9"
+  "NoxAppGroup" => "group.com.example.nox"
+  "NSExtension" => {
+    "NSExtensionPointIdentifier" => "com.apple.networkextension.packet-tunnel"
+    "NSExtensionPrincipalClass" => "NoxTunnel.PacketTunnelProvider"
+Executable=/Users/runner/work/nox-ios/nox-ios/dist/Payload/Nox.app/PlugIns/NoxTunnel.appex/NoxTunnel
+[Dict]
+	[Key] com.apple.developer.networking.networkextension
+	[Value]
+		[Array]
+			[String] packet-tunnel-provider
+	[Key] com.apple.security.application-groups
+	[Value]
+		[Array]
+			[String] group.com.example.nox
