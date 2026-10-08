@@ -1,16 +1,16 @@
 import Foundation
 import Libbox
 
-/// The OpenFlux client compiled into the core (core/noxflux). The app writes openflux.json for
-/// OpenFlux servers; the extension starts the client from it before sing-box, which reaches it
-/// through a SOCKS5 port on 127.0.0.1. Without the file the client is stopped.
+/// The OpenFlux client compiled into the core (core/noxflux). For OpenFlux servers the app sends
+/// openflux.json along with the sing-box config; the extension starts the client from it before
+/// sing-box, which reaches it through a SOCKS5 port on 127.0.0.1. Without it the client is stopped.
 enum OpenFluxCore {
-    /// Starts, reconfigures or stops the client to match openflux.json. A new session has to bring
-    /// up the service channel and get an answer from the exit node within `waitMillis`;
-    /// otherwise the start fails with a readable reason instead of a tunnel that drops everything.
-    static func apply(waitMillis: Int64) throws {
-        guard let text = try? String(contentsOf: AppGroup.openFluxURL, encoding: .utf8),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+    /// Starts, reconfigures or stops the client to match `config` (openflux.json). A new session
+    /// has to bring up the service channel and get an answer from the exit node within
+    /// `waitMillis`; otherwise the start fails with a readable reason instead of a tunnel that
+    /// drops everything.
+    static func apply(_ config: String?, waitMillis: Int64) throws {
+        guard let text = config, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             stop()
             return
         }

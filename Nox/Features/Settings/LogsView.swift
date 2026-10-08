@@ -51,7 +51,9 @@ struct LogsView: View {
             guard source != .app else { return }
             coreLines = []
             while !Task.isCancelled {
-                coreLines = Self.lines(AppGroup.logTail(source.file))
+                let text = await connection.coreLog(openFlux: source == .openflux)
+                guard !Task.isCancelled else { break }
+                coreLines = Self.lines(text)
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
         }
@@ -111,9 +113,9 @@ struct LogsView: View {
         }
     }
 
-    /// The OpenFlux tab appears once its client has written a log.
+    /// The OpenFlux tab appears once its client has written a log or an OpenFlux server is in use.
     private var sources: [Source] {
-        let flux = FileManager.default.fileExists(atPath: AppGroup.openFluxLogURL.path)
+        let flux = connection.server?.proto == .openflux || FileManager.default.fileExists(atPath: AppGroup.openFluxLogURL.path)
         return flux || source == .openflux ? Source.allCases : [.app, .core]
     }
 

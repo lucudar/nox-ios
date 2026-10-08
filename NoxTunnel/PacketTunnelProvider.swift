@@ -2,10 +2,10 @@ import Foundation
 import Libbox
 import NetworkExtension
 
-/// The Packet Tunnel: runs sing-box (libbox) with the config the app wrote to the App Group
-/// container (`AppGroup.configURL`), plus the OpenFlux client for OpenFlux servers
-/// (`OpenFluxCore`). The app hot-reloads it with `AppGroup.reloadMessage` when the server or
-/// routing changes, so the tunnel never drops.
+/// The Packet Tunnel: runs sing-box (libbox) with the config the app sends with the start request
+/// (also stored as `AppGroup.configURL` for on-demand starts), plus the OpenFlux client for
+/// OpenFlux servers (`OpenFluxCore`). The app hot-reloads it with a `TunnelPayload` message when
+/// the server or routing changes, so the tunnel never drops.
 final class PacketTunnelProvider: NEPacketTunnelProvider {
     private var commandServer: LibboxCommandServer?
     private lazy var platform = PlatformInterface(self)
@@ -13,15 +13,21 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     override func startTunnel(options: [String: NSObject]?) async throws {
         AppGroup.clearError()
         do {
-            let config = try Self.readConfig()
+            let sent = TunnelPayload(options: options)
+            let payload = try Self.payload(sent)
+            if let sent, payload.container != sent.container {
+                // The app clears the logs in its own container; these are only here.
+                AppGroup.truncateLog()
+                AppGroup.truncateLog(AppGroup.openFluxLogURL)
+            }
             let server = try makeCommandServer()
-            try OpenFluxCore.apply(waitMillis: 25_000)
-            try server.startOrReloadService(config, options: LibboxOverrideOptions())
+            try OpenFluxCore.apply(payload.openFlux, waitMillis: 25_000)
+            try server.startOrReloadService(payload.config, options: LibboxOverrideOptions())
         } catch {
             let message = Self.describe(error)
             AppGroup.writeError(message)
             shutdown()
-            throw TunnelFailure(message)
+            throw Self.failure(message)
         }
     }
 
@@ -35,17 +41,21 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         commandServer = nil
     }
 
-    /// "reload": re-read config.json and restart sing-box inside the running tunnel.
+    /// A `TunnelPayload` (or the older "reload": re-read the files) restarts sing-box inside the
+    /// running tunnel; `ProviderRequest`s read the core logs.
     override func handleAppMessage(_ messageData: Data) async -> Data? {
-        guard messageData == AppGroup.reloadMessage else { return nil }
+        if messageData == ProviderRequest.coreLog { return Data(AppGroup.logTail().utf8) }
+        if messageData == ProviderRequest.openFluxLog { return Data(AppGroup.logTail(AppGroup.openFluxLogURL).utf8) }
+        let sent = TunnelPayload(message: messageData)
+        guard sent != nil || messageData == AppGroup.reloadMessage else { return nil }
         do {
-            try reload()
+            try reload(sent)
             return nil
         } catch {
             let message = Self.describe(error)
             AppGroup.writeError(message)
             // The old instance is already gone: drop the tunnel instead of black-holing traffic.
-            cancelTunnelWithError(TunnelFailure(message))
+            cancelTunnelWithError(Self.failure(message))
             return Data(message.utf8)
         }
     }
@@ -60,14 +70,39 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     // MARK: Core
 
-    func reload() throws {
+    /// New configs from the app, or the stored ones (a reload the core asked for itself).
+    func reload(_ sent: TunnelPayload? = nil) throws {
         guard let server = commandServer else { throw TunnelFailure("sing-box is not running") }
         reasserting = true
         defer { reasserting = false }
         AppGroup.clearError()
-        let config = try Self.readConfig()
-        try OpenFluxCore.apply(waitMillis: 15_000)
-        try server.startOrReloadService(config, options: LibboxOverrideOptions())
+        let payload = try Self.payload(sent)
+        try OpenFluxCore.apply(payload.openFlux, waitMillis: 15_000)
+        try server.startOrReloadService(payload.config, options: LibboxOverrideOptions())
+    }
+
+    /// The configs to run. Sent by the app: their paths are moved into this process's container if
+    /// the app's isn't shared with it, and a copy is kept there for on-demand starts. Not sent: the
+    /// stored files.
+    private static func payload(_ sent: TunnelPayload?) throws -> TunnelPayload {
+        let payload: TunnelPayload
+        if let sent {
+            payload = sent.relocated()
+            if payload.container != sent.container { try? payload.store() }
+        } else {
+            do {
+                payload = try TunnelPayload.stored()
+            } catch {
+                guard !AppGroup.isShared else { throw TunnelFailure("config.json: \(error.localizedDescription)") }
+                let group = AppGroup.configuredIdentifier
+                throw TunnelFailure(Locale.preferredLanguages.first?.hasPrefix("ru") == true
+                    ? "Нет конфигурации: туннелю недоступна App Group \(group) (сборку переподписали без неё?). Подключитесь из приложения Nox."
+                    : "No configuration: the App Group \(group) isn't available to the tunnel (re-signed without it?). Connect from the Nox app.")
+            }
+        }
+        // Normally the app has put them into the shared container already.
+        BundledRuleSets.install(from: BundledRuleSets.containingApp)
+        return payload
     }
 
     private func makeCommandServer() throws -> LibboxCommandServer {
@@ -101,17 +136,17 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         commandServer = nil
     }
 
-    private static func readConfig() throws -> String {
-        do {
-            return try String(contentsOf: AppGroup.configURL, encoding: .utf8)
-        } catch {
-            throw TunnelFailure("config.json: \(error.localizedDescription)")
-        }
-    }
-
     private static func describe(_ error: Error) -> String {
         if let failure = error as? TunnelFailure { return failure.message }
         return (error as NSError).localizedDescription
+    }
+
+    /// What iOS hands back to the app (`fetchLastDisconnectError`). A Swift error arrives as
+    /// "NoxTunnel.TunnelFailure error 1": its text is computed on the fly and doesn't survive the
+    /// trip. A plain NSError carries the text in userInfo, and the domain repeats it in case iOS
+    /// drops userInfo (the app reads it back, see `SingBoxEngine.describe`).
+    private static func failure(_ message: String) -> NSError {
+        NSError(domain: "Nox: " + message.prefix(400), code: 1, userInfo: [NSLocalizedDescriptionKey: message])
     }
 }
 

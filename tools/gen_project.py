@@ -21,7 +21,7 @@ PROJ = os.path.join(ROOT, "Nox.xcodeproj")
 CONFIG = os.path.join(ROOT, "Config")
 
 BUNDLE_ID = "com.example.nox"
-MARKETING_VERSION = "0.7"
+MARKETING_VERSION = "0.7.1"
 
 
 def oid(name):

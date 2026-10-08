@@ -16,7 +16,14 @@ final class SingBoxEngine: TunnelEngine {
     private var observer: NSObjectProtocol?
     private let secret: String
 
-    private var providerID: String { (Bundle.main.bundleIdentifier ?? "com.example.nox") + ".tunnel" }
+    /// The bundled extension's own ID: re-signing tools may rename bundle IDs.
+    private let providerID: String = {
+        if let plugins = Bundle.main.builtInPlugInsURL,
+           let id = Bundle(url: plugins.appendingPathComponent("NoxTunnel.appex"))?.bundleIdentifier {
+            return id
+        }
+        return (Bundle.main.bundleIdentifier ?? "com.example.nox") + ".tunnel"
+    }()
 
     init() {
         let key = "nox.core.secret"
@@ -38,7 +45,7 @@ final class SingBoxEngine: TunnelEngine {
 
     func start(_ server: Server, options: TunnelOptions) async throws {
         await OpenFluxKeys.prepare(server)
-        try writeConfig(server, options)
+        let payload = try writeConfig(server, options)
         let manager = try await prepare(options, onDemand: options.autoConnect)
         AppGroup.clearError()
         AppGroup.truncateLog()
@@ -48,7 +55,9 @@ final class SingBoxEngine: TunnelEngine {
             try? FileManager.default.removeItem(at: AppGroup.openFluxLogURL)
         }
         do {
-            try manager.connection.startVPNTunnel()
+            // The configs go with the request too: without a shared App Group the extension
+            // can't read the files.
+            try manager.connection.startVPNTunnel(options: payload.options)
         } catch {
             throw Self.describe(error)
         }
@@ -78,10 +87,10 @@ final class SingBoxEngine: TunnelEngine {
 
     func update(_ server: Server, options: TunnelOptions) async throws {
         await OpenFluxKeys.prepare(server)
-        try writeConfig(server, options)
+        let payload = try writeConfig(server, options)
         guard let session = manager?.connection as? NETunnelProviderSession,
               session.status == .connected || session.status == .reasserting || session.status == .connecting else { return }
-        let reply = try await Self.send(AppGroup.reloadMessage, to: session)
+        let reply = try await Self.send(payload.message, to: session)
         if let reply, !reply.isEmpty {
             throw TunnelError.core(String(decoding: reply, as: UTF8.self))
         }
@@ -114,8 +123,19 @@ final class SingBoxEngine: TunnelEngine {
             try await manager.connection.fetchLastDisconnectError()
             return nil
         } catch {
-            return Self.describe(error).localizedDescription
+            return Self.clean(Self.describe(error).localizedDescription)
         }
+    }
+
+    /// box.log / openflux.log. Without a shared App Group they are in the extension's container:
+    /// the running extension sends their tail.
+    func coreLog(openFlux: Bool) async -> String {
+        let local = AppGroup.logTail(openFlux ? AppGroup.openFluxLogURL : nil)
+        guard local.isEmpty, let session = manager?.connection as? NETunnelProviderSession,
+              session.status == .connected || session.status == .reasserting else { return local }
+        let request = openFlux ? ProviderRequest.openFluxLog : ProviderRequest.coreLog
+        guard let reply = try? await Self.send(request, to: session, timeout: 5) else { return local }
+        return String(decoding: reply, as: UTF8.self)
     }
 
     // MARK: Profile
@@ -201,7 +221,8 @@ final class SingBoxEngine: TunnelEngine {
 
     // MARK: Config
 
-    private func writeConfig(_ server: Server, _ options: TunnelOptions) throws {
+    @discardableResult
+    private func writeConfig(_ server: Server, _ options: TunnelOptions) throws -> TunnelPayload {
         var environment = TunnelEnvironment()
         environment.logPath = AppGroup.logURL.path
         environment.cachePath = AppGroup.cacheURL.path
@@ -213,33 +234,20 @@ final class SingBoxEngine: TunnelEngine {
         environment.openFluxLogPath = AppGroup.openFluxLogURL.path
         let json = try SingBoxConfig.json(server: server, options: options, environment: environment)
         // OpenFlux servers: the extension starts the OpenFlux core from openflux.json first.
-        if let flux = try SingBoxConfig.openFluxJSON(server: server, options: options, environment: environment) {
-            try Data(flux.utf8).write(to: AppGroup.openFluxURL, options: .atomic)
-        } else {
-            try? FileManager.default.removeItem(at: AppGroup.openFluxURL)
-        }
-        try Data(json.utf8).write(to: AppGroup.configURL, options: .atomic)
+        let flux = try SingBoxConfig.openFluxJSON(server: server, options: options, environment: environment)
+        let payload = TunnelPayload(config: json, openFlux: flux)
+        // Stored for on-demand starts (iOS starts the extension without the app).
+        try payload.store()
+        return payload
     }
 
-    /// Copies the rule-sets shipped in the app (`Resources/RuleSets/*.srs`) to the shared
-    /// container once per build, so the first start works before any download.
+    /// The rule-sets shipped in the app go to the container (fresh copies once per build), so the
+    /// first start works before any download.
     private static func installRuleSets() -> Set<String> {
-        let fm = FileManager.default
-        let bundled = (Bundle.main.paths(forResourcesOfType: "srs", inDirectory: "RuleSets")
-            + Bundle.main.paths(forResourcesOfType: "srs", inDirectory: nil)).map { URL(fileURLWithPath: $0) }
-        let directory = AppGroup.ruleSetsURL
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
         let key = "nox.rulesets.build"
         let fresh = UserDefaults.standard.string(forKey: key) != build
-        var tags = Set<String>()
-        for url in bundled {
-            let target = directory.appendingPathComponent(url.lastPathComponent)
-            if fresh || !fm.fileExists(atPath: target.path) {
-                try? fm.removeItem(at: target)
-                guard (try? fm.copyItem(at: url, to: target)) != nil else { continue }
-            }
-            tags.insert(url.deletingPathExtension().lastPathComponent)
-        }
+        let tags = BundledRuleSets.install(from: .main, refresh: fresh)
         if fresh { UserDefaults.standard.set(build, forKey: key) }
         return tags
     }
@@ -247,7 +255,7 @@ final class SingBoxEngine: TunnelEngine {
     // MARK: Helpers
 
     /// Provider message with a timeout (the reply never comes if the extension died).
-    private static func send(_ message: Data, to session: NETunnelProviderSession) async throws -> Data? {
+    private static func send(_ message: Data, to session: NETunnelProviderSession, timeout: Double = 25) async throws -> Data? {
         let gate = OnceGate()
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data?, Error>) in
             do {
@@ -258,7 +266,7 @@ final class SingBoxEngine: TunnelEngine {
                 if gate.claim() { continuation.resume(throwing: describe(error)) }
                 return
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
                 if gate.claim() { continuation.resume(throwing: TunnelError.timeout) }
             }
         }
@@ -267,6 +275,10 @@ final class SingBoxEngine: TunnelEngine {
     /// NetworkExtension errors in plain words.
     private static func describe(_ error: Error) -> TunnelError {
         let ns = error as NSError
+        // The extension's errors: the text is in userInfo and, in case iOS dropped it, the domain.
+        if ns.domain.hasPrefix("Nox: ") {
+            return .core(ns.userInfo[NSLocalizedDescriptionKey] as? String ?? String(ns.domain.dropFirst(5)))
+        }
         if ns.domain == NEVPNErrorDomain {
             switch ns.code {
             case 5:

@@ -7,19 +7,61 @@ import Foundation
 enum AppGroup {
     /// `NoxAppGroup` in Info.plist = group.$(NOX_BUNDLE_ID): change NOX_BUNDLE_ID in the project to
     /// re-sign Nox with your own team, the bundle IDs and the group follow it.
-    static let identifier: String = {
+    static let configuredIdentifier: String = {
         let value = Bundle.main.object(forInfoDictionaryKey: "NoxAppGroup") as? String ?? ""
         return value.isEmpty || value.contains("$(") ? "group.com.example.nox" : value
     }()
+
+    /// The App Group iOS actually grants this build, nil if none. Re-signing tools often rename
+    /// the group: AltStore / SideStore append the team ID and list the result in `ALTAppGroups`,
+    /// others only write it into embedded.mobileprovision. The first candidate with a container wins.
+    static let identifier: String? = {
+        #if os(iOS) || os(macOS)
+        let info = Bundle.main.infoDictionary ?? [:]
+        var candidates = [configuredIdentifier]
+        candidates += info["ALTAppGroups"] as? [String] ?? []
+        let profile = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision").flatMap { try? Data(contentsOf: $0) }
+        // Several groups in the profile: the ones that look like Nox's first.
+        candidates += groups(inProfile: profile ?? Data()).sorted { a, b in
+            let x = a.hasPrefix(configuredIdentifier), y = b.hasPrefix(configuredIdentifier)
+            return x != y ? x : a < b
+        }
+        var seen = Set<String>()
+        for id in candidates where !id.isEmpty && seen.insert(id).inserted {
+            if FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id) != nil { return id }
+        }
+        #endif
+        return nil
+    }()
+
+    /// false: no shared container (simulator, unsigned builds, a signature without the group).
+    /// The app then hands the configs to the extension directly (`TunnelPayload`).
+    static var isShared: Bool { identifier != nil }
+
     /// Provider message: re-read config.json and reload sing-box without dropping the tunnel.
     static let reloadMessage = Data("reload".utf8)
 
-    static var container: URL {
+    static let container: URL = {
         #if os(iOS) || os(macOS)
-        if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) { return url }
+        if let identifier, let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) {
+            return url
+        }
         #endif
-        // Unsigned builds / tests: no group container, a private directory instead.
-        return directory(FileManager.default.temporaryDirectory.appendingPathComponent("NoxGroup", isDirectory: true))
+        // Without a group container each process keeps its files in its own sandbox.
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return directory(base.appendingPathComponent("NoxGroup", isDirectory: true))
+    }()
+
+    /// App Groups in a provisioning profile (embedded.mobileprovision; TrollStore and unsigned
+    /// builds have none). The profile is a signed CMS envelope around a plain XML plist.
+    static func groups(inProfile data: Data) -> [String] {
+        guard let start = data.range(of: Data("<?xml".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(from: data.subdata(in: start.lowerBound..<end.upperBound),
+                                                                     format: nil) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any] else { return [] }
+        return entitlements["com.apple.security.application-groups"] as? [String] ?? []
     }
 
     static var configURL: URL { container.appendingPathComponent("config.json") }

@@ -30,8 +30,8 @@ Nox — VPN/прокси-клиент для iPhone на SwiftUI (iOS 17+). Вн
  SingBoxConfig собирает JSON  ──write──▶  config.json                    ──read──▶   PacketTunnelProvider
  OpenFluxProfile (+ scrypt)   ──write──▶  openflux.json (только OpenFlux) ──read──▶   ├─ OpenFlux-клиент (core/noxflux)
  SingBoxEngine                            RuleSets/*.srs, cache.db                    │   └─ SOCKS5 127.0.0.1:19091 ◀─┐
-  └─ NETunnelProviderManager ─start/stop──────────────────────────────────────────▶   └─ libbox CommandServer (sing-box)
-  └─ sendProviderMessage("reload") ───────────────────────────────────────────────▶       ├─ TUN (fd от NEPacketTunnelFlow)
+  └─ NETunnelProviderManager ─start(конфиги)/stop─────────────────────────────────▶   └─ libbox CommandServer (sing-box)
+  └─ sendProviderMessage(конфиги) ────────────────────────────────────────────────▶       ├─ TUN (fd от NEPacketTunnelFlow)
  CoreAPI ◀── Clash API 127.0.0.1:19090 (трафик, задержка, соединения) ──────────────       ├─ маршрутизация, DNS, rule-set
  LogsView ◀── box.log, openflux.log, error.txt ◀───────────────────────────────────       └─ outbound: VLESS/…/WG/socks ┘
 ```
@@ -40,7 +40,7 @@ Nox — VPN/прокси-клиент для iPhone на SwiftUI (iOS 17+). Вн
 - `Nox/Core/SingBoxEngine.swift` — профиль VPN (`NETunnelProviderManager`), старт/стоп, горячая перезагрузка, ошибки ядра. `CoreAPI.swift` — клиент Clash API.
 - `NoxTunnel/` — расширение: `PacketTunnelProvider` (запуск libbox), `PlatformInterface` (TUN, маршруты, DNS, мониторинг сети для sing-box) и `OpenFluxCore` (запуск и проверка клиента OpenFlux).
 - `core/noxflux/` — Go-пакет клиента OpenFlux: транспорт OpenFlux + userspace TCP/IP (gVisor) + локальный SOCKS5 с паролем; собирается в `Libbox.xcframework` вместе с sing-box.
-- `Shared/AppGroup.swift` — общие пути и сообщения между приложением и расширением.
+- `Shared/AppGroup.swift` — общие пути и сообщения между приложением и расширением; `Shared/TunnelPayload.swift` — конфиги, которые приложение передаёт расширению прямо в запросе на запуск и в сообщении перезагрузки (файлы в App Group нужны для запуска по требованию).
 - В симуляторе Packet Tunnel не работает, поэтому там подключается `DemoTunnelEngine`: он проверяет конфиг и показывает сценарий подключения без туннеля.
 
 Исследование ядер (sing-box, Xray-core, mihomo) и план своего ядра — в [`docs/core-research.md`](docs/core-research.md).
@@ -96,7 +96,7 @@ Network Extension требует **платного аккаунта Apple Devel
 3. сборка для симулятора и неподписанная сборка для iPhone (приложение + расширение, ad-hoc подпись с entitlements);
 4. релиз `v<версия>-<номер сборки>` (например, `v0.7-12`) с пометкой Latest. Хранятся 10 последних сборок.
 
-- `Nox-unsigned.ipa` — для iPhone. Установить можно через Sideloadly, AltStore/SideStore или TrollStore. Для работы VPN нужна подпись сертификатом с правом Network Extension (платный аккаунт разработчика) или TrollStore.
+- `Nox-unsigned.ipa` — для iPhone. Установить можно через Sideloadly, AltStore/SideStore или TrollStore. Для работы VPN нужна подпись сертификатом с правом Network Extension (платный аккаунт разработчика) или TrollStore. Если при переподписи App Group переименовали (AltStore/SideStore и другие инструменты), Nox находит её сам — по `ALTAppGroups` или профилю `embedded.mobileprovision`; если группы нет совсем, туннель всё равно работает (конфиги передаются напрямую), но лог ядра виден только во время подключения.
 - `Nox-simulator.zip` — для симулятора на Mac с Apple Silicon (демо-движок).
 
 Постоянная ссылка на свежую сборку: `https://github.com/lucudar/nox-ios/releases/latest/download/Nox-unsigned.ipa`.

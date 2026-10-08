@@ -29,6 +29,14 @@ protocol TunnelEngine: AnyObject {
     func stop() async
     /// Why the tunnel stopped or failed to start, if known.
     func lastError() async -> String?
+    /// Tail of the core log (`openFlux`: the OpenFlux client's log).
+    func coreLog(openFlux: Bool) async -> String
+}
+
+extension TunnelEngine {
+    func coreLog(openFlux: Bool) async -> String {
+        AppGroup.logTail(openFlux ? AppGroup.openFluxLogURL : nil)
+    }
 }
 
 enum TunnelError: LocalizedError {

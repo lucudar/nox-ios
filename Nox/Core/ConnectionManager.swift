@@ -62,6 +62,12 @@ final class ConnectionManager {
         #endif
         self.engine.onState = { [weak self] state in self?.apply(state) }
         log(.info, "Nox \(AppInfo.version) · \(self.engine.name)")
+        #if !targetEnvironment(simulator)
+        if !AppGroup.isShared {
+            log(.warn, L10n.t("Общая папка App Group «\(AppGroup.configuredIdentifier)» недоступна (сборку переподписали без неё?): настройки передаются туннелю напрямую, лог ядра виден только во время подключения.",
+                              "The App Group \(AppGroup.configuredIdentifier) isn't available (re-signed without it?): settings go to the tunnel directly, the core log shows only while connected."))
+        }
+        #endif
     }
 
     var isActive: Bool { status != .disconnected }
@@ -157,6 +163,11 @@ final class ConnectionManager {
     }
 
     func clearLogs() { logs.removeAll() }
+
+    /// Tail of the core log (`openFlux`: the OpenFlux client's).
+    func coreLog(openFlux: Bool) async -> String {
+        await engine.coreLog(openFlux: openFlux)
+    }
 
     var logText: String {
         let f = DateFormatter()
