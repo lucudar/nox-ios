@@ -1,2 +1,2 @@
-** BUILD SUCCEEDED **
-2026-10-07 19:28:49.223 appintentsmetadataprocessor[3011:13784] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+** BUILD FAILED **
+Nox/Core/ServerStore.swift:42:22: error: cannot find 'DemoData' in scope

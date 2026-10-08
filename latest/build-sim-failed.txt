@@ -1,0 +1,5 @@
+The following build commands failed:
+	SwiftCompile normal x86_64 Compiling\ ServerStore.swift,\ DialRenderer.swift,\ ManualServerView.swift,\ Persist.swift,\ BackgroundPhoto.swift,\ NoxApp.swift,\ HomeView.swift,\ Look.swift,\ GeneratedAssetSymbols.swift Nox/Core/ServerStore.swift Nox/Design/DialRenderer.swift Nox/Features/Servers/ManualServerView.swift Nox/Core/Persist.swift Nox/Design/BackgroundPhoto.swift Nox/App/NoxApp.swift Nox/Features/Home/HomeView.swift Nox/Core/Look.swift build/sim/Build/Intermediates.noindex/Nox.build/Debug-iphonesimulator/Nox.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
+	SwiftCompile normal x86_64 Nox/Core/ServerStore.swift (in target 'Nox' from project 'Nox')
+	Building project Nox with scheme Nox and configuration Debug
+(3 failures)
