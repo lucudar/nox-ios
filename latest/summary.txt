@@ -1,26 +1,26 @@
-run: https://github.com/lucudar/nox-ios/actions/runs/37809357810
-run_number: 10
-sha: c72887529888a5b6dd648736d568ae64906ce27c
+run: https://github.com/lucudar/nox-ios/actions/runs/37832937752
+run_number: 11
+sha: cbab8283c68ad064ed92ed65e635627ffab00f34
 xcode: Xcode 16.4 Build version 16F6 
-libbox: cache-hit= build=success
+libbox: cache-hit=true build=skipped
 simulator: success
 device: success
 package: success
-release: success v0.7-10
+release: success v0.7.1-11
 
 bundle: com.example.nox
  73M	dist/Payload/Nox.app
  68M	dist/Payload/Nox.app/PlugIns/NoxTunnel.appex
-total 139632
-drwxr-xr-x  3 runner  staff        96 Oct  8 16:38 _CodeSignature
-drwxr-xr-x  5 runner  staff       160 Oct  8 16:38 .
-drwxr-xr-x  3 runner  staff        96 Oct  8 16:38 ..
--rw-r--r--  1 runner  staff       993 Oct  8 16:38 Info.plist
--rwxr-xr-x  1 runner  staff  71484320 Oct  8 16:38 NoxTunnel
+total 139744
+drwxr-xr-x  3 runner  staff        96 Oct  8 19:36 _CodeSignature
+drwxr-xr-x  5 runner  staff       160 Oct  8 19:36 .
+drwxr-xr-x  3 runner  staff        96 Oct  8 19:36 ..
+-rw-r--r--  1 runner  staff       995 Oct  8 19:36 Info.plist
+-rwxr-xr-x  1 runner  staff  71542704 Oct  8 19:36 NoxTunnel
 rule-sets: 9
   "CFBundleIdentifier" => "com.example.nox.tunnel"
-  "CFBundleShortVersionString" => "0.7"
-  "CFBundleVersion" => "10"
+  "CFBundleShortVersionString" => "0.7.1"
+  "CFBundleVersion" => "11"
   "NoxAppGroup" => "group.com.example.nox"
   "NSExtension" => {
     "NSExtensionPointIdentifier" => "com.apple.networkextension.packet-tunnel"

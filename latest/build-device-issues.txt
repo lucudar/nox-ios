@@ -1,7 +1,7 @@
 ** BUILD SUCCEEDED **
 #import "Headers/Libbox.objc.h"
-2026-10-08 16:38:02.850 appintentsmetadataprocessor[10730:43627] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
-2026-10-08 16:38:45.296 appintentsmetadataprocessor[12317:47710] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-08 19:35:40.202 appintentsmetadataprocessor[3076:12892] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-08 19:36:26.551 appintentsmetadataprocessor[4133:16288] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 build/device/Build/Products/Release-iphoneos/Libbox.framework/Headers/Libbox.objc.h:1049:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
 build/device/Build/Products/Release-iphoneos/Libbox.framework/Headers/Libbox.objc.h:1178:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'
 build/device/Build/Products/Release-iphoneos/Libbox.framework/Headers/Libbox.objc.h:1451:1: warning: conflicting nullability specifier on return types, 'nullable' conflicts with existing specifier 'nonnull'

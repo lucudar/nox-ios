@@ -1,5 +1,5 @@
 
-SwiftDriverJobDiscovery normal arm64 Compiling RoutesView.swift, Look.swift, SingBoxConfig.swift, AppIconArt.swift, AppearanceView.swift, LanguageView.swift, Countries.swift, ProxySpec.swift, SingBoxEngine.swift, SubscriptionLoader.swift, SettingsIcon.swift, ServersSheet.swift, ConfigFiles.swift, RGB.swift, Glyphs.swift, AddSubscriptionView.swift, SettingsView.swift, Models.swift, TunnelOptions.swift, NoxApp.swift, ColorBridge.swift, HomeView.swift, Route.swift, L10n.swift, Scrypt.swift, DNSView.swift, CoreAPI.swift, OpenVPNConfig.swift, ShareLinkParser.swift, NoxBackground.swift, QRScannerView.swift, StatsView.swift, AppSettings.swift, PingService.swift, FlagView.swift, RoutingView.swift, ManualDraft.swift, SingBoxOutbound.swift, BackgroundPhoto.swift, LogsView.swift, Format.swift, RuleSets.swift, StatsStore.swift, TunnelEngine.swift, ConnectionManager.swift, OpenFluxConfig.swift, ServerStore.swift, Haptics.swift, ManualServerView.swift, AppGroup.swift, Persist.swift, RootView.swift, Components.swift, PowerButton.swift, GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
+SwiftDriverJobDiscovery normal arm64 Compiling ManualDraft.swift, RoutesView.swift, RootView.swift, Scrypt.swift, QRScannerView.swift, AppearanceView.swift, AppIconArt.swift, PingService.swift, LanguageView.swift, OpenVPNConfig.swift, Components.swift, ShareLinkParser.swift, ConnectionManager.swift, TunnelPayload.swift, AppGroup.swift, Haptics.swift, StatsStore.swift, L10n.swift, SettingsView.swift, SingBoxOutbound.swift, AddSubscriptionView.swift, SubscriptionLoader.swift, Models.swift, Route.swift, RuleSets.swift, ServersSheet.swift, BackgroundPhoto.swift, RGB.swift, DNSView.swift, AppSettings.swift, OpenFluxConfig.swift, FlagView.swift, Countries.swift, CoreAPI.swift, StatsView.swift, PowerButton.swift, NoxBackground.swift, Look.swift, RoutingView.swift, NoxApp.swift, SingBoxConfig.swift, ManualServerView.swift, TunnelEngine.swift, Persist.swift, LogsView.swift, ProxySpec.swift, HomeView.swift, ColorBridge.swift, ServerStore.swift, ConfigFiles.swift, Glyphs.swift, SingBoxEngine.swift, Format.swift, TunnelOptions.swift, SettingsIcon.swift, GeneratedAssetSymbols.swift (in target 'Nox' from project 'Nox')
 
 SwiftDriver\ Compilation\ Requirements Nox normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
@@ -9,13 +9,13 @@ SwiftMergeGeneratedHeaders build/device/Build/Intermediates.noindex/Nox.build/Re
     cd /Users/runner/work/nox-ios/nox-ios
     builtin-swiftHeaderTool -arch arm64 build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox-Swift.h -o build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/DerivedSources/Nox-Swift.h
 
-Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule (in target 'Nox' from project 'Nox')
-    cd /Users/runner/work/nox-ios/nox-ios
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule
-
 Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftdoc build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftdoc (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftdoc build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule (in target 'Nox' from project 'Nox')
+    cd /Users/runner/work/nox-ios/nox-ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.swiftmodule build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.swiftmodule
 
 Copy build/device/Build/Products/Release-iphoneos/Nox.swiftmodule/arm64-apple-ios.abi.json build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.abi.json (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
@@ -40,8 +40,8 @@ ProcessInfoPlistFile build/device/Build/Products/Release-iphoneos/Nox.app/Info.p
 ExtractAppIntentsMetadata (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name Nox --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 17.0 --bundle-identifier com.example.nox --output build/device/Build/Products/Release-iphoneos/Nox.app --target-triple arm64-apple-ios17.0 --binary-file build/device/Build/Products/Release-iphoneos/Nox.app/Nox --dependency-file build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox_dependency_info.dat --stringsdata-file build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.SwiftFileList --metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyMetadataFileList --static-metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyStaticMetadataFileList --swift-const-vals-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Objects-normal/arm64/Nox.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-10-08 16:38:45.293 appintentsmetadataprocessor[12317:47710] Starting appintentsmetadataprocessor export
-2026-10-08 16:38:45.296 appintentsmetadataprocessor[12317:47710] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-08 19:36:26.549 appintentsmetadataprocessor[4133:16288] Starting appintentsmetadataprocessor export
+2026-10-08 19:36:26.551 appintentsmetadataprocessor[4133:16288] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs build/device/Build/Products/Release-iphoneos/Nox.app (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
@@ -59,8 +59,8 @@ GenerateDSYMFile build/device/Build/Products/Release-iphoneos/Nox.app.dSYM build
 AppIntentsSSUTraining (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path build/device/Build/Products/Release-iphoneos/Nox.app/Info.plist --temp-dir-path build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/ssu --bundle-id com.example.nox --product-path build/device/Build/Products/Release-iphoneos/Nox.app --extracted-metadata-path build/device/Build/Products/Release-iphoneos/Nox.app/Metadata.appintents --metadata-file-list build/device/Build/Intermediates.noindex/Nox.build/Release-iphoneos/Nox.build/Nox.DependencyMetadataFileList --archive-ssu-assets
-2026-10-08 16:38:45.516 appintentsnltrainingprocessor[12328:47761] Parsing options for appintentsnltrainingprocessor
-2026-10-08 16:38:45.517 appintentsnltrainingprocessor[12328:47761] No AppShortcuts found - Skipping.
+2026-10-08 19:36:26.740 appintentsnltrainingprocessor[4136:16308] Parsing options for appintentsnltrainingprocessor
+2026-10-08 19:36:26.740 appintentsnltrainingprocessor[4136:16308] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException build/device/Build/Products/Release-iphoneos/Nox.app (in target 'Nox' from project 'Nox')
     cd /Users/runner/work/nox-ios/nox-ios
